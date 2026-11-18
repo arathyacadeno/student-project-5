@@ -19,6 +19,7 @@ function StudentDashboard({ user }) {
   const [summary, setSummary] = useState(null);
   const [profile, setProfile] = useState(null);
   const [materials, setMaterials] = useState([]);
+  const [recommendedCourses, setRecommendedCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -34,6 +35,14 @@ function StudentDashboard({ user }) {
       setSummary(sumRes.data);
       setProfile(profRes.data);
       setMaterials(matRes.data.items || []);
+
+      // Also fetch top 2 course matches
+      try {
+        const crsRes = await api.get("/api/v1/guidance/courses/recommend");
+        setRecommendedCourses((crsRes.data || []).slice(0, 2));
+      } catch (cErr) {
+        console.warn("Course recommendation preview fetch error:", cErr);
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to load dashboard data. Please try again.");
@@ -163,6 +172,51 @@ function StudentDashboard({ user }) {
                     onClick={() => navigate("/mock-tests")}
                   >
                     📝 Test Now
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Top Future Course Matches Banner */}
+      {recommendedCourses.length > 0 && (
+        <section className="teacher-section-card" style={{ marginBottom: "24px" }}>
+          <div className="card-head-row">
+            <div>
+              <h3>🎓 Top Higher-Study Matches (Module 4 Recommender)</h3>
+              <p className="subtext">
+                Ranked using your skill profile strengths and academic preferences
+              </p>
+            </div>
+            <button
+              className="action-btn-secondary btn-sm"
+              onClick={() => navigate("/guidance")}
+            >
+              Explore All Courses →
+            </button>
+          </div>
+
+          <div className="courses-grid" style={{ marginTop: "12px" }}>
+            {recommendedCourses.map((crs) => (
+              <div key={crs.id} className="course-card-enhanced">
+                <div className="course-card-header">
+                  <span className="match-badge match-high">
+                    {crs.match_score ?? crs.match_percentage ?? 85}% Match
+                  </span>
+                  <span className="stream-pill">{crs.stream}</span>
+                </div>
+                <h4 style={{ margin: "6px 0", fontSize: "15px" }}>{crs.title}</h4>
+                <p style={{ fontSize: "12px", color: "#334155", margin: "4px 0 10px" }}>
+                  💡 <strong>Reason:</strong> {crs.match_reason || crs.recommended_reason || "Aligned with your strengths"}
+                </p>
+                <div className="card-bottom-actions">
+                  <button
+                    className="action-btn-secondary btn-sm"
+                    onClick={() => navigate("/guidance")}
+                  >
+                    View Details & Roadmaps →
                   </button>
                 </div>
               </div>

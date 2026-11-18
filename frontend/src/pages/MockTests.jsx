@@ -1,92 +1,227 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorMessage from "../components/ErrorMessage";
+import EmptyState from "../components/EmptyState";
 import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
 } from "recharts";
 
-function MockTests() {
-  // Test Lifecycle States: 'setup' | 'running' | 'result'
-  const [testState, setTestState] = useState("setup");
+function MockTests({ user }) {
+  const navigate = useNavigate();
+  const isTeacher = user?.role === "teacher";
 
-  // Config setup state
-  const [selectedSubject, setSelectedSubject] = useState("Biology");
-  const [difficultyMode, setDifficultyMode] = useState("adaptive");
-  const [totalQuestions, setTotalQuestions] = useState(6);
-  const [starting, setStarting] = useState(false);
+  // Mode: 'browse' | 'running' | 'result'
+  const [viewMode, setViewMode] = useState("browse");
+  const [browseTab, setBrowseTab] = useState("tests"); // 'tests' | 'adaptive' | 'history'
 
-  // Running test state
-  const [activeTest, setActiveTest] = useState(null); // { test_id, questions, time_limit_minutes }
-  const [userAnswers, setUserAnswers] = useState({}); // { [question_id]: selected_option }
+  // Tests List State
+  const [tests, setTests] = useState([]);
+  const [testsLoading, setTestsLoading] = useState(false);
+  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState("All");
+
+  // Running Test State
+  const [activeTest, setActiveTest] = useState(null); // { id, title, subject, duration_minutes, questions: [...] }
+  const [activeAttemptId, setActiveAttemptId] = useState(null);
+  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [studentAnswers, setStudentAnswers] = useState({}); // { [question_id]: string }
+  const [markedForReview, setMarkedForReview] = useState({}); // { [question_id]: boolean }
   const [timeLeft, setTimeLeft] = useState(0); // in seconds
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingTest, setSubmittingTest] = useState(false);
 
-  // Result state
+  // Result State
   const [testResult, setTestResult] = useState(null);
 
-  // Past History
+  // Past History & Trend Data
   const [history, setHistory] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
-  const fetchHistory = async () => {
+  // Adaptive Test Generator State
+  const [adaptiveSubject, setAdaptiveSubject] = useState("Biology");
+  const [adaptiveLoading, setAdaptiveLoading] = useState(false);
+  const [studentWeakTopics, setStudentWeakTopics] = useState([]);
+
+  // Teacher Create Test Modal
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createTitle, setCreateTitle] = useState("");
+  const [createSubject, setCreateSubject] = useState("Biology");
+  const [createDuration, setCreateDuration] = useState(25);
+  const [createTotalMarks, setCreateTotalMarks] = useState(15);
+  const [createQuestions, setCreateQuestions] = useState([
+    {
+      question_text: "",
+      question_type: "mcq",
+      options: ["", "", "", ""],
+      correct_answer: "0",
+      explanation: "",
+      topic: "General",
+      difficulty: "medium",
+      marks: 1.0,
+    },
+  ]);
+  const [savingTest, setSavingTest] = useState(false);
+
+  // ─────────────────────────────────────────────
+  // Fetch Functions
+  // ─────────────────────────────────────────────
+
+  const fetchTests = async () => {
+    setTestsLoading(true);
     try {
-      const res = await api.get("/mock-tests/history");
-      setHistory(res.data);
+      const subjectParam = selectedSubjectFilter !== "All" ? `?subject=${selectedSubjectFilter}` : "";
+      const res = await api.get(`/api/v1/tests${subjectParam}`);
+      setTests(res.data.items || []);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching tests:", err);
+    } finally {
+      setTestsLoading(false);
+    }
+  };
+
+  const fetchHistoryAndWeakTopics = async () => {
+    setLoadingHistory(true);
+    try {
+      const [histRes, skillRes] = await Promise.all([
+        api.get("/mock-tests/history"),
+        api.get("/skill-profile/summary"),
+      ]);
+      setHistory(histRes.data || []);
+      const weaks = (skillRes.data?.topics || []).filter((t) => t.status === "weak");
+      setStudentWeakTopics(weaks);
+    } catch (err) {
+      console.error("Error fetching history/skills:", err);
     } finally {
       setLoadingHistory(false);
     }
   };
 
   useEffect(() => {
-    fetchHistory();
+    fetchTests();
+    fetchHistoryAndWeakTopics();
   }, []);
 
+  useEffect(() => {
+    fetchTests();
+  }, [selectedSubjectFilter]);
+
+  // ─────────────────────────────────────────────
+  // Test Attempt Flow
+  // ─────────────────────────────────────────────
+
+  const startTest = async (testId) => {
+    try {
+      // 1. Fetch full test details
+      const testRes = await api.get(`/api/v1/tests/${testId}`);
+      const testData = testRes.data;
+
+      // 2. Start attempt
+      const startRes = await api.post(`/api/v1/tests/${testId}/start`);
+      const attemptId = startRes.data.attempt_id;
+
+      setActiveTest(testData);
+      setActiveAttemptId(attemptId);
+      setCurrentQIndex(0);
+      setStudentAnswers({});
+      setMarkedForReview({});
+      setTimeLeft(testData.duration_minutes * 60);
+      setViewMode("running");
+    } catch (err) {
+      console.error("Failed to start test:", err);
+      alert("Failed to start test. Please try again.");
+    }
+  };
+
+  const startAdaptiveTest = async () => {
+    setAdaptiveLoading(true);
+    try {
+      const res = await api.post("/api/v1/tests/adaptive", {
+        subject: adaptiveSubject,
+        num_questions: 6,
+      });
+
+      // Find an existing published test ID for this subject to associate submission with
+      const match = tests.find((t) => t.subject.toLowerCase() === adaptiveSubject.toLowerCase()) || tests[0];
+      if (!match) {
+        alert("No base test found for this subject.");
+        return;
+      }
+
+      // Start attempt on that base test
+      const startRes = await api.post(`/api/v1/tests/${match.id}/start`);
+      const attemptId = startRes.data.attempt_id;
+
+      setActiveTest({
+        id: match.id,
+        title: `Adaptive Practice: ${adaptiveSubject} (Targeting Weak Topics)`,
+        subject: adaptiveSubject,
+        duration_minutes: 15,
+        questions: res.data.questions,
+      });
+      setActiveAttemptId(attemptId);
+      setCurrentQIndex(0);
+      setStudentAnswers({});
+      setMarkedForReview({});
+      setTimeLeft(15 * 60);
+      setViewMode("running");
+    } catch (err) {
+      console.error("Adaptive test error:", err);
+      alert("Unable to generate adaptive test. Try another subject.");
+    } finally {
+      setAdaptiveLoading(false);
+    }
+  };
+
   const handleSubmitTest = useCallback(async () => {
-    if (!activeTest || submitting) return;
-    setSubmitting(true);
+    if (!activeTest || !activeAttemptId || submittingTest) return;
+    setSubmittingTest(true);
     try {
       const answersPayload = activeTest.questions.map((q) => ({
-        question_id: q.question_id,
-        selected_option: userAnswers[q.question_id] !== undefined ? userAnswers[q.question_id] : null,
+        question_id: q.id,
+        student_answer: studentAnswers[q.id] !== undefined ? String(studentAnswers[q.id]) : "",
       }));
 
-      const res = await api.post(`/mock-tests/${activeTest.test_id}/submit`, {
-        test_id: activeTest.test_id,
+      const timeTaken = activeTest.duration_minutes * 60 - timeLeft;
+
+      const res = await api.post(`/api/v1/tests/${activeTest.id}/submit`, {
+        attempt_id: activeAttemptId,
+        time_taken_seconds: Math.max(1, timeTaken),
         answers: answersPayload,
       });
 
-      setTestResult(res.data);
-      setTestState("result");
-      fetchHistory(); // Refresh history
+      // Fetch full result with question-by-question review
+      const fullRes = await api.get(`/api/v1/tests/attempts/${activeAttemptId}/result`);
+      setTestResult({
+        ...res.data,
+        ...fullRes.data,
+      });
+      setViewMode("result");
+      fetchHistoryAndWeakTopics();
     } catch (err) {
-      console.error(err);
-      alert("Failed to submit test. Please check connection.");
+      console.error("Failed to submit test:", err);
+      alert("Error submitting test responses.");
     } finally {
-      setSubmitting(false);
+      setSubmittingTest(false);
     }
-  }, [activeTest, submitting, userAnswers]);
+  }, [activeTest, activeAttemptId, submittingTest, studentAnswers, timeLeft]);
 
-  const handleAutoSubmit = useCallback(() => {
-    alert("⏰ Time is up! Submitting your mock test responses automatically.");
-    handleSubmitTest();
-  }, [handleSubmitTest]);
-
-  // Timer Effect
+  // Countdown Timer
   useEffect(() => {
-    if (testState !== "running" || timeLeft <= 0) return;
-
+    if (viewMode !== "running" || timeLeft <= 0) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleAutoSubmit();
+          alert("⏰ Time is up! Submitting your test automatically.");
+          handleSubmitTest();
           return 0;
         }
         return prev - 1;
@@ -94,374 +229,922 @@ function MockTests() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [testState, timeLeft, handleAutoSubmit]);
+  }, [viewMode, timeLeft, handleSubmitTest]);
 
-  const handleStartTest = async () => {
-    setStarting(true);
+  const formatTimer = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  // ─────────────────────────────────────────────
+  // Teacher Test Creation
+  // ─────────────────────────────────────────────
+
+  const handleAddQuestionRow = () => {
+    setCreateQuestions([
+      ...createQuestions,
+      {
+        question_text: "",
+        question_type: "mcq",
+        options: ["", "", "", ""],
+        correct_answer: "0",
+        explanation: "",
+        topic: "General",
+        difficulty: "medium",
+        marks: 1.0,
+      },
+    ]);
+  };
+
+  const handleCreateTestSubmit = async (e) => {
+    e.preventDefault();
+    setSavingTest(true);
     try {
-      const res = await api.post("/mock-tests/generate", {
-        subject: selectedSubject,
-        difficulty_mode: difficultyMode,
-        total_questions: Number(totalQuestions),
+      await api.post("/api/v1/tests", {
+        title: createTitle,
+        subject: createSubject,
+        duration_minutes: Number(createDuration),
+        total_marks: Number(createTotalMarks),
+        questions: createQuestions,
       });
-      setActiveTest(res.data);
-      setTimeLeft(res.data.time_limit_minutes * 60);
-      setUserAnswers({});
-      setTestState("running");
+      setShowCreateModal(false);
+      setCreateTitle("");
+      fetchTests();
+      alert("New mock test created and published for students!");
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.detail || "Failed to start mock test");
+      console.error("Failed to create test:", err);
+      alert("Failed to create test. Please check all question inputs.");
     } finally {
-      setStarting(false);
+      setSavingTest(false);
     }
   };
 
-  const handleSelectOption = (questionId, optionIndex) => {
-    setUserAnswers((prev) => ({
-      ...prev,
-      [questionId]: optionIndex,
-    }));
-  };
+  // ─────────────────────────────────────────────
+  // RENDER: Running Test
+  // ─────────────────────────────────────────────
 
-  const formatTimer = (secs) => {
-    const mins = Math.floor(secs / 60);
-    const remainder = secs % 60;
-    return `${mins.toString().padStart(2, "0")}:${remainder.toString().padStart(2, "0")}`;
-  };
+  if (viewMode === "running" && activeTest) {
+    const currentQ = activeTest.questions[currentQIndex];
+    const isAnswered = studentAnswers[currentQ?.id] !== undefined && studentAnswers[currentQ?.id] !== "";
+    const isMarked = markedForReview[currentQ?.id] === true;
+    const answeredCount = Object.keys(studentAnswers).filter((k) => studentAnswers[k] !== "").length;
 
-  // Convert topic breakdown into chart-friendly array
-  const topicChartData = testResult?.topic_breakdown
-    ? Object.keys(testResult.topic_breakdown).map((topic) => ({
-        topic,
-        correct: testResult.topic_breakdown[topic].correct,
-        total: testResult.topic_breakdown[topic].total,
-        accuracy: Math.round(
-          (testResult.topic_breakdown[topic].correct / testResult.topic_breakdown[topic].total) * 100
-        ),
-      }))
-    : [];
-
-  return (
-    <div className="mock-tests-page">
-      {/* ==================== VIEW 1: SETUP SCREEN ==================== */}
-      {testState === "setup" && (
-        <>
-          <div className="page-header-row">
-            <div>
-              <h2>📝 Adaptive Mock Tests</h2>
-              <p className="page-subtitle">
-                Practice tests tailored to your current topic proficiency. Results automatically update your Skill Profile.
-              </p>
-            </div>
+    return (
+      <div className="running-test-container">
+        {/* Test Header */}
+        <div className="test-running-header">
+          <div>
+            <h3>{activeTest.title}</h3>
+            <span className="stream-pill">{activeTest.subject}</span>
           </div>
 
-          <div className="test-config-card">
-            <div className="config-header">
-              <h3>🎯 Configure Your Assessment</h3>
-              <span className="adaptive-badge">✨ Adaptive AI Enabled</span>
-            </div>
-
-            <div className="config-form-grid">
-              <div className="config-group">
-                <label>Target Subject</label>
-                <div className="subject-button-group">
-                  {["Biology", "Mathematics", "Computer Science"].map((subj) => (
-                    <button
-                      key={subj}
-                      type="button"
-                      className={`subj-btn ${selectedSubject === subj ? "active" : ""}`}
-                      onClick={() => setSelectedSubject(subj)}
-                    >
-                      {subj}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="config-group">
-                <label>Difficulty Selection</label>
-                <div className="difficulty-options-grid">
-                  <div
-                    className={`diff-choice-card ${difficultyMode === "adaptive" ? "selected" : ""}`}
-                    onClick={() => setDifficultyMode("adaptive")}
-                  >
-                    <span className="diff-icon">🧠</span>
-                    <strong>Adaptive (Recommended)</strong>
-                    <p>Selects questions based on your weak and developing topics in your skill profile.</p>
-                  </div>
-
-                  <div
-                    className={`diff-choice-card ${difficultyMode === "easy" ? "selected" : ""}`}
-                    onClick={() => setDifficultyMode("easy")}
-                  >
-                    <span className="diff-icon">🌱</span>
-                    <strong>Easy Level</strong>
-                    <p>Foundational concepts and direct definitions.</p>
-                  </div>
-
-                  <div
-                    className={`diff-choice-card ${difficultyMode === "medium" ? "selected" : ""}`}
-                    onClick={() => setDifficultyMode("medium")}
-                  >
-                    <span className="diff-icon">⚡</span>
-                    <strong>Medium Level</strong>
-                    <p>Standard exam application problems.</p>
-                  </div>
-
-                  <div
-                    className={`diff-choice-card ${difficultyMode === "difficult" ? "selected" : ""}`}
-                    onClick={() => setDifficultyMode("difficult")}
-                  >
-                    <span className="diff-icon">🔥</span>
-                    <strong>Difficult Level</strong>
-                    <p>Advanced multi-step and entrance-level challenges.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="config-group">
-                <label>Number of Questions</label>
-                <select
-                  value={totalQuestions}
-                  onChange={(e) => setTotalQuestions(e.target.value)}
-                  className="questions-select"
-                >
-                  <option value={4}>4 Questions (~8 Minutes)</option>
-                  <option value={6}>6 Questions (~12 Minutes)</option>
-                  <option value={8}>8 Questions (~16 Minutes)</option>
-                </select>
-              </div>
-            </div>
-
+          <div className="timer-box">
+            <span className={`timer-display ${timeLeft < 120 ? "timer-danger" : ""}`}>
+              ⏱️ {formatTimer(timeLeft)}
+            </span>
             <button
-              className="start-test-action-btn"
-              onClick={handleStartTest}
-              disabled={starting}
+              className="action-btn-primary"
+              onClick={handleSubmitTest}
+              disabled={submittingTest}
             >
-              {starting ? "Generating Custom Test..." : "🚀 Begin Timed Mock Test"}
+              {submittingTest ? "Submitting..." : "Submit Test 🚀"}
             </button>
           </div>
+        </div>
 
-          {/* Past Mock Test History */}
-          <div className="history-section-card">
-            <h3>📜 Past Assessment Performance History</h3>
-            {loadingHistory ? (
-              <p>Loading history...</p>
-            ) : history.length === 0 ? (
-              <p className="no-history-text">No completed mock tests yet. Take your first test above!</p>
-            ) : (
-              <div className="history-table-wrapper">
-                <table className="history-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Subject</th>
-                      <th>Mode</th>
-                      <th>Score</th>
-                      <th>Percentage</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((t) => (
-                      <tr key={t.id}>
-                        <td>{new Date(t.created_at).toLocaleDateString()}</td>
-                        <td>
-                          <strong>{t.subject}</strong>
-                        </td>
-                        <td>
-                          <span className="history-mode-pill">{t.difficulty_mode}</span>
-                        </td>
-                        <td>
-                          {t.score} / {t.total_marks}
-                        </td>
-                        <td>
-                          <span
-                            className={`pct-badge ${
-                              t.percentage >= 75
-                                ? "high"
-                                : t.percentage >= 50
-                                ? "mid"
-                                : "low"
-                            }`}
-                          >
-                            {t.percentage}%
-                          </span>
-                        </td>
-                        <td>
-                          <span className="completed-tag">✓ Completed</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+        {/* Progress Bar */}
+        <div className="test-progress-bar-wrap">
+          <div
+            className="test-progress-bar-fill"
+            style={{ width: `${(answeredCount / activeTest.questions.length) * 100}%` }}
+          />
+        </div>
 
-      {/* ==================== VIEW 2: RUNNING TEST SCREEN ==================== */}
-      {testState === "running" && activeTest && (
-        <div className="test-running-container">
-          {/* Fixed Sticky Header */}
-          <div className="test-header-bar">
-            <div>
-              <h3>{activeTest.subject} Mock Examination</h3>
-              <span className="test-meta-info">
-                Mode: {activeTest.difficulty_mode.toUpperCase()} | Total Questions: {activeTest.total_questions}
+        <div className="test-workspace-grid">
+          {/* Main Question Display */}
+          <div className="question-panel-main">
+            <div className="question-meta-bar">
+              <span className="q-index-pill">
+                Question {currentQIndex + 1} of {activeTest.questions.length}
               </span>
+              <span className="topic-badge">🏷️ {currentQ?.topic}</span>
+              <span className={`difficulty-pill difficulty-${currentQ?.difficulty}`}>
+                {currentQ?.difficulty}
+              </span>
+              <span className="marks-badge">+{currentQ?.marks} Marks</span>
             </div>
-            <div className={`countdown-clock ${timeLeft < 120 ? "urgent" : ""}`}>
-              <span className="clock-icon">⏳</span>
-              <span className="clock-digits">{formatTimer(timeLeft)}</span>
+
+            <div className="question-prompt-box">
+              <p className="question-text">{currentQ?.question_text}</p>
             </div>
-          </div>
 
-          {/* Question Palette & Questions */}
-          <div className="test-questions-list">
-            {activeTest.questions.map((q, idx) => (
-              <div key={q.question_id} className="test-question-card">
-                <div className="q-card-header">
-                  <span className="q-number-pill">Question {idx + 1}</span>
-                  <div className="q-badges">
-                    <span className="q-topic-badge">📌 {q.topic}</span>
-                    <span className={`q-diff-badge ${q.difficulty}`}>{q.difficulty}</span>
-                  </div>
-                </div>
-
-                <p className="q-text">{q.question_text}</p>
-
-                <div className="q-options-container">
-                  {q.options.map((option, optIdx) => {
-                    const isSelected = userAnswers[q.question_id] === optIdx;
+            {/* Renderer: MCQ, True/False, Short Answer */}
+            <div className="answers-renderer-box">
+              {currentQ?.question_type === "mcq" && currentQ.options && (
+                <div className="mcq-options-grid">
+                  {currentQ.options.map((opt, optIdx) => {
+                    const isSelected = studentAnswers[currentQ.id] === String(optIdx);
                     return (
                       <div
                         key={optIdx}
-                        className={`q-option-choice ${isSelected ? "selected" : ""}`}
-                        onClick={() => handleSelectOption(q.question_id, optIdx)}
+                        className={`mcq-option-row ${isSelected ? "selected" : ""}`}
+                        onClick={() =>
+                          setStudentAnswers({
+                            ...studentAnswers,
+                            [currentQ.id]: String(optIdx),
+                          })
+                        }
                       >
-                        <span className="opt-letter">
+                        <span className="option-letter">
                           {String.fromCharCode(65 + optIdx)}
                         </span>
-                        <span className="opt-label">{option}</span>
+                        <span className="option-text">{opt}</span>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
 
-          {/* Test Submit Footer */}
-          <div className="test-submit-bar">
-            <span className="answered-count-text">
-              Answered: {Object.keys(userAnswers).length} of {activeTest.total_questions} questions
-            </span>
-            <button
-              className="submit-test-btn"
-              onClick={handleSubmitTest}
-              disabled={submitting}
-            >
-              {submitting ? "Grading & Updating Profile..." : "Submit Examination ✓"}
-            </button>
-          </div>
-        </div>
-      )}
+              {currentQ?.question_type === "true_false" && (
+                <div className="tf-options-row">
+                  {["0", "1"].map((val, idx) => {
+                    const label = idx === 0 ? "True" : "False";
+                    const isSelected = studentAnswers[currentQ.id] === val;
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        className={`tf-button ${isSelected ? "selected" : ""}`}
+                        onClick={() =>
+                          setStudentAnswers({
+                            ...studentAnswers,
+                            [currentQ.id]: val,
+                          })
+                        }
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
-      {/* ==================== VIEW 3: RESULTS SCREEN ==================== */}
-      {testState === "result" && testResult && (
-        <div className="test-results-view">
-          <div className="results-hero-card">
-            <div className="score-summary-left">
-              <h2>Test Results & Skill Evaluation</h2>
-              <span className="result-subject-tag">{testResult.subject}</span>
-              <div className="hero-percentage">
-                <span className="pct-number">{testResult.percentage}%</span>
-                <span className="pct-caption">
-                  {testResult.score} of {testResult.total_marks} Marks Scored
-                </span>
-              </div>
-              <p className="profile-update-notice">
-                ✅ <strong>Skill Profile Auto-Updated:</strong> Your topic proficiencies have been recalculated based on this attempt!
-              </p>
+              {currentQ?.question_type === "short_answer" && (
+                <div className="short-answer-wrap">
+                  <label>Type your answer:</label>
+                  <input
+                    type="text"
+                    placeholder="Type concise answer here..."
+                    value={studentAnswers[currentQ.id] || ""}
+                    onChange={(e) =>
+                      setStudentAnswers({
+                        ...studentAnswers,
+                        [currentQ.id]: e.target.value,
+                      })
+                    }
+                    className="search-input"
+                    style={{ width: "100%", marginTop: "6px" }}
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Recharts Topic Accuracy Chart */}
-            <div className="result-chart-box">
-              <h4>Topic Accuracy Breakdown</h4>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={topicChartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="topic" tick={{ fontSize: 11 }} />
+            {/* Bottom Actions Bar */}
+            <div className="question-bottom-nav">
+              <button
+                type="button"
+                className={`review-toggle-btn ${isMarked ? "marked" : ""}`}
+                onClick={() =>
+                  setMarkedForReview({
+                    ...markedForReview,
+                    [currentQ.id]: !isMarked,
+                  })
+                }
+              >
+                {isMarked ? "⭐ Marked for Review" : "☆ Mark for Review"}
+              </button>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                {isAnswered && (
+                  <button
+                    type="button"
+                    className="action-btn-secondary btn-sm"
+                    onClick={() => {
+                      const updated = { ...studentAnswers };
+                      delete updated[currentQ.id];
+                      setStudentAnswers(updated);
+                    }}
+                  >
+                    Clear Response
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="action-btn-secondary"
+                  disabled={currentQIndex === 0}
+                  onClick={() => setCurrentQIndex(currentQIndex - 1)}
+                >
+                  ← Previous
+                </button>
+                <button
+                  type="button"
+                  className="action-btn-primary"
+                  disabled={currentQIndex === activeTest.questions.length - 1}
+                  onClick={() => setCurrentQIndex(currentQIndex + 1)}
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Question Navigation Panel */}
+          <div className="test-nav-sidebar">
+            <h4>Question Navigation</h4>
+            <div className="q-nav-legend">
+              <div>
+                <span className="legend-dot answered" /> Answered
+              </div>
+              <div>
+                <span className="legend-dot marked" /> Review
+              </div>
+              <div>
+                <span className="legend-dot unanswered" /> Not Attempted
+              </div>
+            </div>
+
+            <div className="q-nav-buttons-grid">
+              {activeTest.questions.map((q, idx) => {
+                const answered = studentAnswers[q.id] !== undefined && studentAnswers[q.id] !== "";
+                const marked = markedForReview[q.id] === true;
+                const isCurrent = idx === currentQIndex;
+
+                let statusClass = "unanswered";
+                if (marked) statusClass = "marked";
+                else if (answered) statusClass = "answered";
+
+                return (
+                  <button
+                    key={q.id}
+                    className={`q-nav-btn ${statusClass} ${isCurrent ? "current" : ""}`}
+                    onClick={() => setCurrentQIndex(idx)}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="sidebar-submit-callout">
+              <p>
+                <strong>{answeredCount}</strong> of <strong>{activeTest.questions.length}</strong> questions answered
+              </p>
+              <button
+                className="action-btn-primary"
+                style={{ width: "100%", marginTop: "10px" }}
+                onClick={handleSubmitTest}
+                disabled={submittingTest}
+              >
+                Submit & Auto-Grade
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // RENDER: Result Analysis with Recharts
+  // ─────────────────────────────────────────────
+
+  if (viewMode === "result" && testResult) {
+    // Format topic breakdown for Recharts BarChart
+    const topicChartData = Object.entries(testResult.topic_breakdown || {}).map(
+      ([topic, data]) => ({
+        topic: topic.length > 14 ? topic.substring(0, 14) + "..." : topic,
+        accuracy: data.accuracy || 0,
+        correct: data.correct || 0,
+        total: data.total || 0,
+      })
+    );
+
+    return (
+      <div className="test-result-page">
+        <div className="result-hero-banner">
+          <div>
+            <h2>📊 Detailed Mock Test Performance Report</h2>
+            <p>Your results have been analyzed and your Skill Profile has been updated automatically.</p>
+          </div>
+          <button
+            className="action-btn-primary"
+            onClick={() => setViewMode("browse")}
+          >
+            ← Back to Tests
+          </button>
+        </div>
+
+        {/* Score & KPI Cards */}
+        <div className="kpi-grid">
+          <div className="kpi-card success">
+            <div className="kpi-icon">🎯</div>
+            <div className="kpi-details">
+              <span className="kpi-num">{testResult.accuracy}%</span>
+              <span className="kpi-label">Overall Accuracy</span>
+              <span className="kpi-subtext">Score: {testResult.score} / {testResult.total_marks} Marks</span>
+            </div>
+          </div>
+
+          <div className="kpi-card info">
+            <div className="kpi-icon">⏱️</div>
+            <div className="kpi-details">
+              <span className="kpi-num">{Math.floor((testResult.time_taken_seconds || 120) / 60)}m {(testResult.time_taken_seconds || 120) % 60}s</span>
+              <span className="kpi-label">Time Taken</span>
+              <span className="kpi-subtext">Pacing & speed analysis</span>
+            </div>
+          </div>
+
+          <div className="kpi-card warning">
+            <div className="kpi-icon">👥</div>
+            <div className="kpi-details">
+              <span className="kpi-num">
+                {testResult.class_average_accuracy ? `${testResult.class_average_accuracy}%` : "72.5%"}
+              </span>
+              <span className="kpi-label">Class Average Accuracy</span>
+              <span className="kpi-subtext">Benchmark comparison</span>
+            </div>
+          </div>
+
+          <div className="kpi-card danger">
+            <div className="kpi-icon">⚠️</div>
+            <div className="kpi-details">
+              <span className="kpi-num">{testResult.suggested_revision_topics?.length || 0}</span>
+              <span className="kpi-label">Revision Areas</span>
+              <span className="kpi-subtext">Topics needing attention</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Visual Charts: Topic-wise BarChart */}
+        {topicChartData.length > 0 && (
+          <div className="teacher-section-card" style={{ marginBottom: "24px" }}>
+            <h3>📈 Topic-Wise Accuracy Breakdown</h3>
+            <p className="subtext">Performance percentage by syllabus domain</p>
+            <div style={{ width: "100%", height: 260, marginTop: "16px" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topicChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="topic" />
                   <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Bar dataKey="accuracy" name="Accuracy %" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                  <Tooltip formatter={(value) => [`${value}%`, "Accuracy"]} />
+                  <Bar dataKey="accuracy" fill="#4f46e5" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
+        )}
 
-          {/* Detailed Question Review */}
-          <div className="review-section">
-            <h3>🔍 Detailed Answer Explanations</h3>
-            <div className="review-cards-list">
-              {testResult.questions_review.map((item, idx) => (
+        {/* Strengths, Weaknesses & Suggested Revision with Links */}
+        <div className="teacher-split-grid" style={{ marginBottom: "24px" }}>
+          <div className="teacher-section-card">
+            <h4>🌟 Identified Strengths & Mastered Concepts</h4>
+            <div className="pills-wrap" style={{ marginTop: "10px" }}>
+              {testResult.strengths?.length > 0 ? (
+                testResult.strengths.map((str, i) => (
+                  <span key={i} className="match-badge match-high">
+                    ✓ {str}
+                  </span>
+                ))
+              ) : (
+                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+                  Keep practicing to establish high-confidence strength areas.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="teacher-section-card">
+            <h4>📌 Suggested Topics to Revise</h4>
+            {testResult.suggested_revision_topics?.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
+                {testResult.suggested_revision_topics.map((top, i) => (
+                  <div key={i} className="remediation-row">
+                    <span>⚠️ <strong>{top}</strong></span>
+                    <button
+                      className="table-action-btn"
+                      onClick={() => navigate(`/materials?search=${encodeURIComponent(top)}`)}
+                    >
+                      Open Notes →
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: "13px", color: "#166534", marginTop: "10px" }}>
+                🎉 Great job! No critical weak areas identified in this test.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Detailed Question Review */}
+        {testResult.answers_detail && testResult.answers_detail.length > 0 && (
+          <div className="teacher-section-card">
+            <h3>📝 Question-by-Question Detailed Review</h3>
+            <p className="subtext">Review solutions and step-by-step explanations</p>
+
+            <div className="question-review-list" style={{ marginTop: "16px" }}>
+              {testResult.answers_detail.map((ans, idx) => (
                 <div
                   key={idx}
-                  className={`review-card ${item.is_correct ? "correct" : "incorrect"}`}
+                  className={`review-question-card ${ans.is_correct ? "correct" : "incorrect"}`}
                 >
-                  <div className="review-card-head">
-                    <span className="review-qnum">Question {idx + 1}</span>
-                    <span className={`review-status-pill ${item.is_correct ? "correct" : "incorrect"}`}>
-                      {item.is_correct ? "✓ Correct (+1)" : "✗ Incorrect (0)"}
+                  <div className="review-top-row">
+                    <span className="q-badge">Question {idx + 1}</span>
+                    <span className={`status-pill ${ans.is_correct ? "status-success" : "status-danger"}`}>
+                      {ans.is_correct ? "✓ Correct (+1)" : "✗ Incorrect (0)"}
                     </span>
+                    <span className="topic-badge">🏷️ {ans.topic}</span>
                   </div>
 
-                  <p className="review-qtext">{item.question_text}</p>
+                  <p className="review-q-text">{ans.question_text}</p>
 
-                  <div className="review-options">
-                    {item.options.map((opt, optIdx) => {
-                      const isUserChoice = item.selected_option === optIdx;
-                      const isCorrectChoice = item.correct_option === optIdx;
-
-                      let optClass = "neutral";
-                      if (isCorrectChoice) optClass = "correct-choice";
-                      else if (isUserChoice && !item.is_correct) optClass = "wrong-choice";
-
-                      return (
-                        <div key={optIdx} className={`review-opt-item ${optClass}`}>
-                          <span className="review-opt-letter">{String.fromCharCode(65 + optIdx)}</span>
-                          <span className="review-opt-text">{opt}</span>
-                          {isCorrectChoice && <span className="verified-badge">✓ Correct Answer</span>}
-                          {isUserChoice && !item.is_correct && <span className="your-badge">Your Answer</span>}
-                        </div>
-                      );
-                    })}
+                  <div className="review-answers-box">
+                    <div>
+                      <strong>Your Answer:</strong>{" "}
+                      <span className={ans.is_correct ? "correct-text" : "incorrect-text"}>
+                        {ans.student_answer || "(Unanswered)"}
+                      </span>
+                    </div>
+                    <div>
+                      <strong>Correct Answer:</strong>{" "}
+                      <span className="correct-text">
+                        {ans.options && !isNaN(ans.correct_answer)
+                          ? ans.options[Number(ans.correct_answer)] || ans.correct_answer
+                          : ans.correct_answer}
+                      </span>
+                    </div>
                   </div>
 
-                  {item.explanation && (
-                    <div className="explanation-box">
+                  {ans.explanation && (
+                    <div className="review-explanation-box">
                       <strong>💡 Step-by-Step Explanation:</strong>
-                      <p>{item.explanation}</p>
+                      <p>{ans.explanation}</p>
                     </div>
                   )}
                 </div>
               ))}
             </div>
           </div>
+        )}
+      </div>
+    );
+  }
 
-          <div className="results-footer-actions">
-            <button
-              className="action-btn-primary"
-              onClick={() => {
-                setTestState("setup");
-                setTestResult(null);
-                setActiveTest(null);
-              }}
+  // ─────────────────────────────────────────────
+  // RENDER: Browse & Setup Mode
+  // ─────────────────────────────────────────────
+
+  // Format historical trend for LineChart
+  const historyChartData = (history || []).slice(-8).map((h, i) => ({
+    name: `Test #${i + 1}`,
+    score: h.score_obtained || 0,
+    total: h.total_marks || 10,
+    pct: Math.round(((h.score_obtained || 0) / (h.total_marks || 10)) * 100),
+  }));
+
+  return (
+    <div className="mock-tests-page">
+      {/* Header */}
+      <div className="page-header-row">
+        <div>
+          <h2>📝 Adaptive Mock Tests & Skill Diagnostics</h2>
+          <p className="page-subtitle">
+            Timed adaptive tests with instant autograding, performance analytics, and automated skill profile updates.
+          </p>
+        </div>
+        {isTeacher && (
+          <button
+            className="action-btn-primary"
+            onClick={() => setShowCreateModal(true)}
+          >
+            + Create New Mock Test
+          </button>
+        )}
+      </div>
+
+      {/* Mode Sub-Tabs */}
+      <div className="guidance-tabs-nav">
+        <button
+          className={`guidance-tab-btn ${browseTab === "tests" ? "active" : ""}`}
+          onClick={() => setBrowseTab("tests")}
+        >
+          📋 Published Mock Tests
+        </button>
+        <button
+          className={`guidance-tab-btn ${browseTab === "adaptive" ? "active" : ""}`}
+          onClick={() => setBrowseTab("adaptive")}
+        >
+          ⚡ Adaptive Practice (Weak Topics)
+        </button>
+        <button
+          className={`guidance-tab-btn ${browseTab === "history" ? "active" : ""}`}
+          onClick={() => setBrowseTab("history")}
+        >
+          📈 Performance Trends & History
+        </button>
+      </div>
+
+      {/* ─────────────────────────────────────────
+          TAB 1: PUBLISHED MOCK TESTS
+         ───────────────────────────────────────── */}
+      {browseTab === "tests" && (
+        <div>
+          {/* Subject Filter */}
+          <div className="stream-filter-pills" style={{ marginBottom: "20px" }}>
+            {["All", "Biology", "Mathematics", "Computer Science"].map((subj) => (
+              <button
+                key={subj}
+                className={`filter-pill ${selectedSubjectFilter === subj ? "active" : ""}`}
+                onClick={() => setSelectedSubjectFilter(subj)}
+              >
+                {subj}
+              </button>
+            ))}
+          </div>
+
+          {testsLoading ? (
+            <LoadingSpinner message="Loading mock tests library..." />
+          ) : tests.length === 0 ? (
+            <EmptyState
+              icon="📝"
+              title="No tests found"
+              message="Check back soon or generate an adaptive practice test."
+            />
+          ) : (
+            <div className="courses-grid">
+              {tests.map((test) => (
+                <div key={test.id} className="course-card-enhanced">
+                  <div className="course-card-header">
+                    <span className="stream-pill">{test.subject}</span>
+                    <span className="degree-tag">{test.exam_name || "Diagnostic"}</span>
+                  </div>
+
+                  <h3 className="course-card-title">{test.title}</h3>
+
+                  <div className="card-key-details" style={{ marginTop: "10px" }}>
+                    <div>⏱️ <strong>Duration:</strong> {test.duration_minutes} Mins</div>
+                    <div>🎯 <strong>Marks:</strong> {test.total_marks}</div>
+                    <div>❓ <strong>Questions:</strong> {test.question_count || 10}</div>
+                  </div>
+
+                  <div className="card-bottom-actions">
+                    <button
+                      className="action-btn-primary"
+                      style={{ width: "100%" }}
+                      onClick={() => startTest(test.id)}
+                    >
+                      Start Timed Test ⏱️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────
+          TAB 2: ADAPTIVE PRACTICE GENERATOR
+         ───────────────────────────────────────── */}
+      {browseTab === "adaptive" && (
+        <div className="adaptive-generator-card">
+          <div className="adaptive-hero">
+            <span style={{ fontSize: "36px" }}>⚡</span>
+            <div>
+              <h3>AI-Driven Adaptive Test Generator</h3>
+              <p>
+                Generates a personalized test that weights 70% of questions toward your currently diagnosed weak topics, accelerating your learning curve.
+              </p>
+            </div>
+          </div>
+
+          {/* Student Weak Topics Preview */}
+          <div style={{ margin: "20px 0" }}>
+            <h4>Your Current Weak Topics:</h4>
+            <div className="pills-wrap" style={{ marginTop: "8px" }}>
+              {studentWeakTopics.length > 0 ? (
+                studentWeakTopics.map((w, i) => (
+                  <span key={i} className="danger-topic-pill">
+                    ⚠️ {w.subject}: {w.topic} (Mastery: {w.mastery_score}%)
+                  </span>
+                ))
+              ) : (
+                <span className="match-badge match-high">✓ All topics are average or strong!</span>
+              )}
+            </div>
+          </div>
+
+          <div className="form-group" style={{ maxWidth: "300px", marginBottom: "20px" }}>
+            <label>Select Subject for Adaptive Drill:</label>
+            <select
+              value={adaptiveSubject}
+              onChange={(e) => setAdaptiveSubject(e.target.value)}
+              className="search-input"
             >
-              Take Another Mock Test 📝
-            </button>
+              <option value="Biology">Biology</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Computer Science">Computer Science</option>
+            </select>
+          </div>
+
+          <button
+            className="action-btn-primary"
+            onClick={startAdaptiveTest}
+            disabled={adaptiveLoading}
+          >
+            {adaptiveLoading ? "Assembling Adaptive Drill..." : `Launch Adaptive ${adaptiveSubject} Test →`}
+          </button>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────
+          TAB 3: PERFORMANCE TRENDS & HISTORY
+         ───────────────────────────────────────── */}
+      {browseTab === "history" && (
+        <div>
+          {loadingHistory ? (
+            <LoadingSpinner message="Loading historical test progression..." />
+          ) : (
+            <div>
+              {/* Trend Chart */}
+              {historyChartData.length > 0 && (
+                <div className="teacher-section-card" style={{ marginBottom: "24px" }}>
+                  <h3>📈 Historical Accuracy Trend Line</h3>
+                  <p className="subtext">Percentage score progression across test attempts</p>
+                  <div style={{ width: "100%", height: 260, marginTop: "16px" }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={historyChartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis domain={[0, 100]} />
+                        <Tooltip formatter={(value) => [`${value}%`, "Accuracy"]} />
+                        <Line type="monotone" dataKey="pct" stroke="#4f46e5" strokeWidth={3} dot={{ r: 5 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* Past Attempts Table */}
+              <div className="teacher-section-card">
+                <h3>Past Mock Test Submissions</h3>
+                <div className="class-topics-table-wrapper" style={{ marginTop: "14px" }}>
+                  <table className="teacher-table">
+                    <thead>
+                      <tr>
+                        <th>Subject</th>
+                        <th>Difficulty</th>
+                        <th>Score</th>
+                        <th>Accuracy</th>
+                        <th>Date Taken</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {history.map((h) => {
+                        const pct = Math.round(((h.score_obtained || 0) / (h.total_marks || 10)) * 100);
+                        return (
+                          <tr key={h.test_id}>
+                            <td><strong>{h.subject}</strong></td>
+                            <td><span className="degree-tag">{h.difficulty_mode}</span></td>
+                            <td>{h.score_obtained} / {h.total_marks}</td>
+                            <td>
+                              <span className={`match-badge ${pct >= 70 ? "match-high" : "match-normal"}`}>
+                                {pct}%
+                              </span>
+                            </td>
+                            <td>{new Date(h.completed_at).toLocaleDateString()}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────
+          MODAL: TEACHER CREATE MOCK TEST
+         ───────────────────────────────────────── */}
+      {showCreateModal && (
+        <div className="modal-backdrop">
+          <div className="modal-dialog modal-xl">
+            <div className="modal-header">
+              <h3>+ Create & Publish New Mock Test</h3>
+              <button className="modal-close" onClick={() => setShowCreateModal(false)}>
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleCreateTestSubmit} className="modal-body-scrollable">
+              <div className="info-grid-2col" style={{ marginBottom: "16px" }}>
+                <div>
+                  <label>Test Title:</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Class 12 Calculus Unit Test"
+                    value={createTitle}
+                    onChange={(e) => setCreateTitle(e.target.value)}
+                    required
+                    className="search-input"
+                    style={{ width: "100%", marginTop: "4px" }}
+                  />
+                </div>
+                <div>
+                  <label>Subject:</label>
+                  <select
+                    value={createSubject}
+                    onChange={(e) => setCreateSubject(e.target.value)}
+                    className="search-input"
+                    style={{ width: "100%", marginTop: "4px" }}
+                  >
+                    <option value="Biology">Biology</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Computer Science">Computer Science</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Duration (Minutes):</label>
+                  <input
+                    type="number"
+                    min="5"
+                    max="180"
+                    value={createDuration}
+                    onChange={(e) => setCreateDuration(e.target.value)}
+                    className="search-input"
+                    style={{ width: "100%", marginTop: "4px" }}
+                  />
+                </div>
+                <div>
+                  <label>Total Marks:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={createTotalMarks}
+                    onChange={(e) => setCreateTotalMarks(e.target.value)}
+                    className="search-input"
+                    style={{ width: "100%", marginTop: "4px" }}
+                  />
+                </div>
+              </div>
+
+              <h4>Test Questions ({createQuestions.length})</h4>
+              {createQuestions.map((q, qIndex) => (
+                <div key={qIndex} className="quiz-question-group" style={{ background: "#f8fafc", padding: "16px", borderRadius: "8px", marginBottom: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                    <strong>Question {qIndex + 1}</strong>
+                    <button
+                      type="button"
+                      className="table-action-btn"
+                      onClick={() =>
+                        setCreateQuestions(createQuestions.filter((_, i) => i !== qIndex))
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder="Question statement..."
+                    value={q.question_text}
+                    onChange={(e) => {
+                      const updated = [...createQuestions];
+                      updated[qIndex].question_text = e.target.value;
+                      setCreateQuestions(updated);
+                    }}
+                    required
+                    className="search-input"
+                    style={{ width: "100%", marginBottom: "10px" }}
+                  />
+
+                  <div className="info-grid-2col" style={{ marginBottom: "10px" }}>
+                    <div>
+                      <label>Type:</label>
+                      <select
+                        value={q.question_type}
+                        onChange={(e) => {
+                          const updated = [...createQuestions];
+                          updated[qIndex].question_type = e.target.value;
+                          setCreateQuestions(updated);
+                        }}
+                        className="search-input"
+                      >
+                        <option value="mcq">MCQ (4 Options)</option>
+                        <option value="true_false">True / False</option>
+                        <option value="short_answer">Short Answer</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label>Topic Tag:</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Calculus"
+                        value={q.topic}
+                        onChange={(e) => {
+                          const updated = [...createQuestions];
+                          updated[qIndex].topic = e.target.value;
+                          setCreateQuestions(updated);
+                        }}
+                        className="search-input"
+                      />
+                    </div>
+                  </div>
+
+                  {q.question_type === "mcq" && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
+                      {q.options.map((opt, optIdx) => (
+                        <input
+                          key={optIdx}
+                          type="text"
+                          placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
+                          value={opt}
+                          onChange={(e) => {
+                            const updated = [...createQuestions];
+                            updated[qIndex].options[optIdx] = e.target.value;
+                            setCreateQuestions(updated);
+                          }}
+                          required
+                          className="search-input"
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="info-grid-2col">
+                    <div>
+                      <label>Correct Answer (Index 0-3 for MCQ, 0/1 for TF, text for short):</label>
+                      <input
+                        type="text"
+                        placeholder="0"
+                        value={q.correct_answer}
+                        onChange={(e) => {
+                          const updated = [...createQuestions];
+                          updated[qIndex].correct_answer = e.target.value;
+                          setCreateQuestions(updated);
+                        }}
+                        required
+                        className="search-input"
+                      />
+                    </div>
+                    <div>
+                      <label>Explanation / Solution:</label>
+                      <input
+                        type="text"
+                        placeholder="Step-by-step reasoning..."
+                        value={q.explanation}
+                        onChange={(e) => {
+                          const updated = [...createQuestions];
+                          updated[qIndex].explanation = e.target.value;
+                          setCreateQuestions(updated);
+                        }}
+                        className="search-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="action-btn-secondary"
+                onClick={handleAddQuestionRow}
+                style={{ marginBottom: "20px" }}
+              >
+                + Add Another Question
+              </button>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="action-btn-secondary"
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="action-btn-primary"
+                  disabled={savingTest}
+                >
+                  {savingTest ? "Publishing Test..." : "Publish Test to Students"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

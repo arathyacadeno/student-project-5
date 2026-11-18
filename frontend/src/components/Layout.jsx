@@ -1,6 +1,7 @@
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
+import ChatWidget from "./ChatWidget";
 
 function Layout({ user, onLogout, children }) {
   return (
@@ -13,6 +14,8 @@ function Layout({ user, onLogout, children }) {
         </main>
       </div>
       <BottomNav user={user} />
+      {/* Floating AI Mentor Chatbot accessible everywhere */}
+      <ChatWidget user={user} />
     </div>
   );
 }

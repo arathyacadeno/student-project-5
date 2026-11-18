@@ -2,15 +2,28 @@ import { useState, useEffect, useRef } from "react";
 import api from "../api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+import EmptyState from "../components/EmptyState";
 
 function AIMentor({ user }) {
+  // Sessions State
+  const [sessions, setSessions] = useState([]);
+  const [activeSessionId, setActiveSessionId] = useState(null);
+  const [loadingSessions, setLoadingSessions] = useState(true);
+
+  // Messages State
   const [messages, setMessages] = useState([]);
-  const [weakTopics, setWeakTopics] = useState([]);
-  const [suggestedChips, setSuggestedChips] = useState([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [loadingHistory, setLoadingHistory] = useState(true);
-  const [error, setError] = useState(null);
+
+  // Student Context & Suggested Chips
+  const [weakTopics, setWeakTopics] = useState([]);
+  const [suggestedChips, setSuggestedChips] = useState([
+    "What entrance exams should I focus on?",
+    "Which courses best match my skill profile?",
+    "How can I improve my weak topics?",
+    "Explain the difference between JEE Main and JEE Advanced.",
+  ]);
 
   const messagesEndRef = useRef(null);
 
@@ -18,33 +31,134 @@ function AIMentor({ user }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const fetchHistory = async () => {
-    setLoadingHistory(true);
-    setError(null);
+  // Fetch student weak topics
+  const fetchWeakTopics = async () => {
     try {
-      const res = await api.get("/mentor/history");
-      setMessages(res.data.messages || []);
-      setWeakTopics(res.data.student_weak_topics || []);
-      setSuggestedChips(res.data.suggested_chips || []);
+      const res = await api.get("/skill-profile/summary");
+      const weaks = (res.data?.topics || []).filter((t) => t.status === "weak");
+      setWeakTopics(weaks);
     } catch (err) {
-      console.error(err);
-      setError("Failed to load mentor chat history.");
+      console.error("Error fetching skills:", err);
+    }
+  };
+
+  // Fetch all sessions
+  const fetchSessions = async () => {
+    setLoadingSessions(true);
+    try {
+      const res = await api.get("/api/v1/chat/sessions");
+      setSessions(res.data || []);
+      if (res.data && res.data.length > 0 && !activeSessionId) {
+        setActiveSessionId(res.data[0].session_id);
+        fetchMessages(res.data[0].session_id);
+      }
+    } catch (err) {
+      console.error("Error fetching sessions:", err);
     } finally {
-      setLoadingHistory(false);
+      setLoadingSessions(false);
+    }
+  };
+
+  // Fetch messages for a session
+  const fetchMessages = async (sId) => {
+    setLoadingMessages(true);
+    try {
+      const res = await api.get(`/api/v1/chat/sessions/${sId}/messages`);
+      if (res.data && res.data.length > 0) {
+        setMessages(res.data);
+      } else {
+        setMessages([
+          {
+            id: 1,
+            sender: "bot",
+            message: `Hello ${user?.name || "Student"}! 👋 I am your StudyMatch Assistant, backed by official guidance documents and your personal skill profile. How can I help you excel today?`,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error("Error fetching messages:", err);
+    } finally {
+      setLoadingMessages(false);
     }
   };
 
   useEffect(() => {
-    fetchHistory();
+    fetchSessions();
+    fetchWeakTopics();
   }, []);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, sending]);
 
-  const handleSendMessage = async (msgText) => {
-    const textToSend = msgText || inputMessage;
+  // Create new session
+  const handleCreateSession = async () => {
+    try {
+      const res = await api.post("/api/v1/chat/sessions", {
+        title: "New Study Discussion",
+      });
+      const newSess = {
+        session_id: res.data.session_id,
+        title: res.data.title,
+        created_at: res.data.created_at,
+        message_count: 0,
+      };
+      setSessions([newSess, ...sessions]);
+      setActiveSessionId(newSess.session_id);
+      setMessages([
+        {
+          id: 1,
+          sender: "bot",
+          message: `Started a fresh discussion thread. Ask me about exams, courses, study strategies, or syllabus concepts!`,
+        },
+      ]);
+    } catch (err) {
+      console.error("Failed to create session:", err);
+      alert("Unable to create a new session.");
+    }
+  };
+
+  // Delete session
+  const handleDeleteSession = async (sId, e) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this discussion thread?")) return;
+    try {
+      await api.delete(`/api/v1/chat/sessions/${sId}`);
+      const remaining = sessions.filter((s) => s.session_id !== sId);
+      setSessions(remaining);
+      if (activeSessionId === sId) {
+        if (remaining.length > 0) {
+          setActiveSessionId(remaining[0].session_id);
+          fetchMessages(remaining[0].session_id);
+        } else {
+          setActiveSessionId(null);
+          setMessages([]);
+        }
+      }
+    } catch (err) {
+      console.error("Delete session error:", err);
+    }
+  };
+
+  // Send message
+  const handleSendMessage = async (customText) => {
+    const textToSend = customText || inputMessage;
     if (!textToSend.trim() || sending) return;
+
+    let targetSessionId = activeSessionId;
+    if (!targetSessionId) {
+      try {
+        const newSess = await api.post("/api/v1/chat/sessions", {
+          title: textToSend.substring(0, 30),
+        });
+        targetSessionId = newSess.data.session_id;
+        setActiveSessionId(targetSessionId);
+        setSessions([newSess.data, ...sessions]);
+      } catch (err) {
+        alert("Could not start discussion.");
+        return;
+      }
+    }
 
     const tempUserMsg = {
       id: Date.now(),
@@ -58,148 +172,191 @@ function AIMentor({ user }) {
     setSending(true);
 
     try {
-      const res = await api.post("/mentor/chat", { message: textToSend });
-      const mentorMsg = {
+      const res = await api.post(`/api/v1/chat/sessions/${targetSessionId}/message`, {
+        message: textToSend,
+      });
+
+      const botMsg = {
         id: Date.now() + 1,
-        sender: "mentor",
-        message: res.data.response,
-        referenced_topics: res.data.referenced_topics,
-        created_at: res.data.timestamp || new Date().toISOString(),
+        sender: "bot",
+        message: res.data.bot_response,
+        sources: res.data.sources,
+        created_at: new Date().toISOString(),
       };
-      setMessages((prev) => [...prev, mentorMsg]);
-      if (res.data.suggested_chips?.length > 0) {
-        setSuggestedChips(res.data.suggested_chips);
+
+      setMessages((prev) => [...prev, botMsg]);
+      if (res.data.suggested_questions?.length > 0) {
+        setSuggestedChips(res.data.suggested_questions);
       }
+      // Refresh session titles
+      api.get("/api/v1/chat/sessions").then((r) => setSessions(r.data || []));
     } catch (err) {
-      console.error(err);
-      alert("Failed to receive mentor response. Please try again.");
+      console.error("Send message error:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 2,
+          sender: "bot",
+          message: "I am having trouble reaching the mentoring service right now. Please try again shortly.",
+        },
+      ]);
     } finally {
       setSending(false);
     }
   };
 
-  const handleClearHistory = async () => {
-    if (!window.confirm("Are you sure you want to clear your conversation history?")) return;
-    try {
-      await api.delete("/mentor/history");
-      setMessages([]);
-    } catch (err) {
-      console.error("Failed to clear history", err);
-    }
-  };
-
   return (
     <div className="ai-mentor-page">
-      {/* Mentor Header */}
-      <div className="mentor-header">
-        <div className="mentor-header-left">
-          <div className="mentor-avatar-badge">🤖</div>
-          <div>
-            <h2>StudyMatch AI Personal Academic Mentor</h2>
-            <p className="mentor-subtitle">
-              Your 24/7 dedicated tutor analyzing your test errors, weak topics, and exam preparations.
-            </p>
-          </div>
+      {/* Page Header */}
+      <div className="page-header-row">
+        <div>
+          <h2>🤖 StudyMatch Assistant & Personal AI Mentor</h2>
+          <p className="page-subtitle">
+            RAG-powered conversational mentor referencing verified exam syllabi, college directories, and your personal topic mastery profile.
+          </p>
         </div>
-
-        <button className="clear-history-btn" onClick={handleClearHistory} title="Clear conversation history">
-          🗑️ Clear Chat
+        <button className="action-btn-primary" onClick={handleCreateSession}>
+          + New Discussion
         </button>
       </div>
 
-      {/* Weak Topics Context Pill Banner */}
-      {weakTopics.length > 0 && (
-        <div className="mentor-context-banner">
-          <span className="context-indicator">🎯 Mentor Context Active:</span>
-          <span>Aware of your focus areas in: </span>
-          {weakTopics.map((top, idx) => (
-            <span key={idx} className="context-topic-tag">
-              {top}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* Main Two-Column Chat Container */}
+      <div className="mentor-layout-split">
+        {/* Left Sidebar: Threads & Weak Topics Context */}
+        <div className="mentor-threads-sidebar">
+          <div className="sidebar-list-header">
+            <h4>💬 Discussion Threads</h4>
+            <span className="results-count">{sessions.length} Threads</span>
+          </div>
 
-      {/* Chat Area */}
-      <div className="mentor-chat-box">
-        {loadingHistory ? (
-          <LoadingSpinner message="Loading mentor conversation..." />
-        ) : error ? (
-          <ErrorMessage error={error} onRetry={fetchHistory} />
-        ) : (
-          <div className="chat-messages-scroll">
-            {messages.length === 0 && (
-              <div className="mentor-intro-card">
-                <span className="intro-icon">👋</span>
-                <h3>Hello {user?.name || "Student"}! I am your AI Mentor.</h3>
-                <p>
-                  I have synchronized with your latest skill profile and mock test results.
-                  Ask me anything from resolving doubts in Calculus to breaking down DNA replication
-                  or planning your entrance exam revision roadmap!
-                </p>
-              </div>
-            )}
-
-            {messages.map((msg, index) => {
-              const isStudent = msg.sender === "student";
-              return (
+          <div className="threads-list">
+            {loadingSessions ? (
+              <p style={{ padding: "12px", fontSize: "13px", color: "var(--text-muted)" }}>
+                Loading discussions...
+              </p>
+            ) : sessions.length === 0 ? (
+              <p style={{ padding: "12px", fontSize: "13px", color: "var(--text-muted)" }}>
+                No active discussions. Click + New Discussion to start!
+              </p>
+            ) : (
+              sessions.map((s) => (
                 <div
-                  key={index}
-                  className={`chat-message-row ${isStudent ? "student-row" : "mentor-row"}`}
+                  key={s.session_id}
+                  className={`thread-item-row ${s.session_id === activeSessionId ? "active" : ""}`}
+                  onClick={() => {
+                    setActiveSessionId(s.session_id);
+                    fetchMessages(s.session_id);
+                  }}
                 >
-                  <div className="message-avatar">
-                    {isStudent ? (user?.name?.charAt(0).toUpperCase() || "S") : "🤖"}
+                  <div className="thread-info">
+                    <span className="thread-title">{s.title || "Study Discussion"}</span>
+                    <span className="thread-date">
+                      {new Date(s.created_at).toLocaleDateString()}
+                    </span>
                   </div>
+                  <button
+                    className="thread-delete-btn"
+                    title="Delete thread"
+                    onClick={(e) => handleDeleteSession(s.session_id, e)}
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
 
-                  <div className={`message-bubble ${isStudent ? "student-bubble" : "mentor-bubble"}`}>
-                    <div className="message-sender-name">
-                      {isStudent ? (user?.name || "You") : "AI Academic Mentor"}
-                    </div>
-                    <div className="message-text">
-                      <pre className="bubble-pre">{msg.message}</pre>
-                    </div>
-                    {msg.referenced_topics && msg.referenced_topics.length > 0 && (
-                      <div className="bubble-topics-footer">
-                        <span>Referenced topics: </span>
-                        {msg.referenced_topics.map((t, i) => (
-                          <span key={i} className="ref-topic-pill">
-                            {t}
-                          </span>
-                        ))}
+          {/* Student Weak Topics Context Banner */}
+          <div className="mentor-weak-context-box">
+            <h4>🎯 Active Skill Context:</h4>
+            <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: "4px 0 8px" }}>
+              Injected into prompts so guidance automatically targets your growth areas.
+            </p>
+            <div className="pills-wrap">
+              {weakTopics.length > 0 ? (
+                weakTopics.map((w, i) => (
+                  <span key={i} className="danger-topic-pill">
+                    ⚠️ {w.topic} ({w.mastery_score}%)
+                  </span>
+                ))
+              ) : (
+                <span className="match-badge match-high">✓ Strong Profile</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Chat Column */}
+        <div className="mentor-chat-column">
+          {/* Chat Header Bar */}
+          <div className="mentor-chat-top-bar">
+            <div className="mentor-profile-group">
+              <span className="mentor-avatar-badge">🤖</span>
+              <div>
+                <strong>StudyMatch Assistant</strong>
+                <span className="online-tag">● Powered by Gemini 1.5 & Verified RAG Database</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Message Stream */}
+          <div className="mentor-messages-scroll-area">
+            {loadingMessages ? (
+              <LoadingSpinner message="Retrieving conversation history..." />
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`chat-message-bubble-row ${
+                    msg.sender === "student" ? "student" : "bot"
+                  }`}
+                >
+                  <div
+                    className={`mentor-chat-bubble ${
+                      msg.sender === "student" ? "student" : "bot"
+                    }`}
+                  >
+                    <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{msg.message}</p>
+
+                    {/* Sources Citations Pill */}
+                    {msg.sources && msg.sources.length > 0 && (
+                      <div className="rag-sources-box">
+                        <strong>📚 Verified Guidance Sources:</strong>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "4px" }}>
+                          {msg.sources.map((src, idx) => (
+                            <div key={idx} className="rag-source-item">
+                              📄 <strong>{src.title}</strong>
+                              {src.snippet && (
+                                <span className="source-snippet"> — "{src.snippet.substring(0, 120)}..."</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
-              );
-            })}
+              ))
+            )}
 
             {sending && (
-              <div className="chat-message-row mentor-row">
-                <div className="message-avatar">🤖</div>
-                <div className="message-bubble mentor-bubble typing-bubble">
-                  <div className="typing-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                  <span className="typing-text">Analyzing your profile & composing advice...</span>
+              <div className="chat-message-bubble-row bot">
+                <div className="mentor-chat-bubble bot typing">
+                  <span>Assistant is analyzing syllabus knowledge base and your skill profile...</span>
                 </div>
               </div>
             )}
-
             <div ref={messagesEndRef} />
           </div>
-        )}
 
-        {/* Suggested Question Chips */}
-        {suggestedChips.length > 0 && (
-          <div className="suggested-chips-bar">
-            <span className="chips-title">💡 Suggested Questions:</span>
-            <div className="chips-list">
+          {/* Suggested Quick Question Chips */}
+          <div className="suggested-chips-container">
+            <span className="chips-label">💡 Suggested Questions:</span>
+            <div className="chips-scroll">
               {suggestedChips.map((chip, idx) => (
                 <button
                   key={idx}
-                  className="question-chip-btn"
+                  className="quick-chip-btn"
                   onClick={() => handleSendMessage(chip)}
                   disabled={sending}
                 >
@@ -208,32 +365,31 @@ function AIMentor({ user }) {
               ))}
             </div>
           </div>
-        )}
 
-        {/* Chat Input Bar */}
-        <form
-          className="chat-input-bar"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSendMessage();
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Ask a question, request a concept breakdown, or ask for a revision schedule..."
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            disabled={sending}
-            className="mentor-text-input"
-          />
-          <button
-            type="submit"
-            disabled={sending || !inputMessage.trim()}
-            className="send-message-btn"
+          {/* Message Input Box */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            className="mentor-input-form"
           >
-            {sending ? "..." : "Send 📤"}
-          </button>
-        </form>
+            <input
+              type="text"
+              placeholder="Ask about exam eligibility, syllabus breakdown, career roadmaps, or study tips..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              className="mentor-text-input"
+            />
+            <button
+              type="submit"
+              className="action-btn-primary"
+              disabled={sending || !inputMessage.trim()}
+            >
+              {sending ? "Thinking..." : "Send Message 🚀"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -11,6 +11,23 @@ function TeacherDashboard({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Counselling Requests State
+  const [counsellingRequests, setCounsellingRequests] = useState([]);
+  const [counsellingLoading, setCounsellingLoading] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [newStatus, setNewStatus] = useState("scheduled");
+  const [teacherNotes, setTeacherNotes] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
+
+  // Guidance Documents (RAG) State
+  const [guidanceDocs, setGuidanceDocs] = useState([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [showUploadDocModal, setShowUploadDocModal] = useState(false);
+  const [docTitle, setDocTitle] = useState("");
+  const [docType, setDocType] = useState("exam");
+  const [docContent, setDocContent] = useState("");
+  const [savingDoc, setSavingDoc] = useState(false);
+
   const fetchStats = async () => {
     setLoading(true);
     setError(null);
@@ -25,9 +42,90 @@ function TeacherDashboard({ user }) {
     }
   };
 
+  const fetchCounsellingRequests = async () => {
+    setCounsellingLoading(true);
+    try {
+      const res = await api.get("/api/v1/guidance/counselling");
+      setCounsellingRequests(res.data || []);
+    } catch (err) {
+      console.error("Counselling requests fetch error:", err);
+    } finally {
+      setCounsellingLoading(false);
+    }
+  };
+
+  const fetchGuidanceDocs = async () => {
+    setDocsLoading(true);
+    try {
+      const res = await api.get("/api/v1/chat/documents");
+      setGuidanceDocs(res.data.items || []);
+    } catch (err) {
+      console.error("Guidance docs fetch error:", err);
+    } finally {
+      setDocsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchStats();
+    fetchCounsellingRequests();
+    fetchGuidanceDocs();
   }, []);
+
+  const handleUpdateRequest = async (e) => {
+    e.preventDefault();
+    if (!selectedRequest) return;
+    setSavingNotes(true);
+    try {
+      await api.patch(`/api/v1/guidance/counselling/${selectedRequest.id}`, {
+        status: newStatus,
+        teacher_notes: teacherNotes,
+      });
+      setSelectedRequest(null);
+      setTeacherNotes("");
+      fetchCounsellingRequests();
+      alert("Counselling request updated successfully!");
+    } catch (err) {
+      console.error("Update request error:", err);
+      alert("Failed to update counselling request.");
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  const handleUploadDoc = async (e) => {
+    e.preventDefault();
+    if (!docTitle.trim() || !docContent.trim()) return;
+    setSavingDoc(true);
+    try {
+      await api.post("/api/v1/chat/documents", {
+        title: docTitle,
+        doc_type: docType,
+        content: docContent,
+        is_approved: true,
+      });
+      setShowUploadDocModal(false);
+      setDocTitle("");
+      setDocContent("");
+      fetchGuidanceDocs();
+      alert("Guidance document uploaded and vector embeddings indexed for AI Chatbot!");
+    } catch (err) {
+      console.error("Upload doc error:", err);
+      alert("Failed to upload guidance document.");
+    } finally {
+      setSavingDoc(false);
+    }
+  };
+
+  const handleApproveDoc = async (docId) => {
+    try {
+      await api.patch(`/api/v1/chat/documents/${docId}/approve`);
+      fetchGuidanceDocs();
+      alert("Document approved for chatbot RAG indexing.");
+    } catch (err) {
+      console.error("Approve doc error:", err);
+    }
+  };
 
   if (loading) return <LoadingSpinner message="Aggregating class analytics & weak topics..." />;
   if (error) return <ErrorMessage error={error} onRetry={fetchStats} />;
@@ -39,10 +137,16 @@ function TeacherDashboard({ user }) {
         <div>
           <h2>👨‍🏫 Teacher Academic Command Center ({user?.name || "Teacher"})</h2>
           <p className="page-subtitle">
-            Monitor class-wide weak topics, identify at-risk students, and publish instructional resources.
+            Monitor class-wide weak topics, respond to career counselling requests, curate verified guidance documents, and publish instructional resources.
           </p>
         </div>
         <div className="teacher-top-actions">
+          <button
+            className="action-btn-secondary"
+            onClick={() => setShowUploadDocModal(true)}
+          >
+            + Add Guidance Doc (RAG)
+          </button>
           <button
             className="action-btn-primary"
             onClick={() => navigate("/materials")}
@@ -82,13 +186,157 @@ function TeacherDashboard({ user }) {
         </div>
 
         <div className="kpi-card warning">
-          <div className="kpi-icon">📄</div>
+          <div className="kpi-icon">🤝</div>
           <div className="kpi-details">
-            <span className="kpi-num">{stats?.total_papers || 0}</span>
-            <span className="kpi-label">Solved Papers</span>
-            <span className="kpi-subtext">Previous year exams</span>
+            <span className="kpi-num">{counsellingRequests.length}</span>
+            <span className="kpi-label">Counselling Requests</span>
+            <span className="kpi-subtext">Career & course inquiries</span>
           </div>
         </div>
+      </section>
+
+      {/* Section: Student Career & Higher Studies Counselling Requests */}
+      <section className="teacher-section-card" style={{ marginBottom: "28px" }}>
+        <div className="card-head-row">
+          <div>
+            <h3>🤝 Student Career & Higher Studies Counselling Queue</h3>
+            <p className="subtext">
+              Direct student inquiries regarding course options, entrance exams, and career pathways
+            </p>
+          </div>
+          <button
+            className="action-btn-secondary btn-sm"
+            onClick={fetchCounsellingRequests}
+          >
+            🔄 Refresh Queue
+          </button>
+        </div>
+
+        {counsellingLoading ? (
+          <p>Loading requests...</p>
+        ) : counsellingRequests.length === 0 ? (
+          <p className="all-good-msg">🎉 No pending counselling requests at this time.</p>
+        ) : (
+          <div className="class-topics-table-wrapper">
+            <table className="teacher-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Preferred Mode</th>
+                  <th>Doubt / Question</th>
+                  <th>Submitted</th>
+                  <th>Status</th>
+                  <th>Teacher Response</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {counsellingRequests.map((req) => (
+                  <tr key={req.id}>
+                    <td>
+                      <strong>{req.student_name || `Student #${req.student_id}`}</strong>
+                    </td>
+                    <td>
+                      <span className="mode-badge">📍 {req.preferred_mode}</span>
+                    </td>
+                    <td style={{ maxWidth: "260px" }}>
+                      <p style={{ margin: 0, fontSize: "13px" }}>{req.message}</p>
+                    </td>
+                    <td>{new Date(req.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <span className={`status-badge status-${req.status}`}>
+                        {req.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ maxWidth: "200px", fontSize: "12px", color: "var(--text-muted)" }}>
+                      {req.teacher_notes || "No notes yet"}
+                    </td>
+                    <td>
+                      <button
+                        className="table-action-btn"
+                        onClick={() => {
+                          setSelectedRequest(req);
+                          setNewStatus(req.status || "scheduled");
+                          setTeacherNotes(req.teacher_notes || "");
+                        }}
+                      >
+                        Respond & Schedule →
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Section: Verified Guidance Documents (RAG Knowledge Base) */}
+      <section className="teacher-section-card" style={{ marginBottom: "28px" }}>
+        <div className="card-head-row">
+          <div>
+            <h3>📖 Verified Guidance Documents (AI Chatbot Knowledge Base)</h3>
+            <p className="subtext">
+              Documents curated by faculty to ground AI responses with official facts and prevent hallucination
+            </p>
+          </div>
+          <button
+            className="action-btn-primary btn-sm"
+            onClick={() => setShowUploadDocModal(true)}
+          >
+            + Upload Document
+          </button>
+        </div>
+
+        {docsLoading ? (
+          <p>Loading knowledge base...</p>
+        ) : guidanceDocs.length === 0 ? (
+          <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+            No documents uploaded yet. Upload official exam brochures or course guides.
+          </p>
+        ) : (
+          <div className="class-topics-table-wrapper">
+            <table className="teacher-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>RAG Indexing Status</th>
+                  <th>Indexed Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {guidanceDocs.map((doc) => (
+                  <tr key={doc.id}>
+                    <td>
+                      <strong>📄 {doc.title}</strong>
+                    </td>
+                    <td>
+                      <span className="stream-pill">{doc.doc_type}</span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${doc.is_approved ? "status-completed" : "status-pending"}`}>
+                        {doc.is_approved ? "VERIFIED & INDEXED" : "PENDING REVIEW"}
+                      </span>
+                    </td>
+                    <td>{new Date(doc.created_at).toLocaleDateString()}</td>
+                    <td>
+                      {!doc.is_approved && (
+                        <button
+                          className="table-action-btn"
+                          onClick={() => handleApproveDoc(doc.id)}
+                        >
+                          Approve for RAG ✓
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {/* Grid: Class Weak Topics & At-Risk Students */}
@@ -208,6 +456,153 @@ function TeacherDashboard({ user }) {
           </div>
         </section>
       </div>
+
+      {/* Modal: Respond & Schedule Counselling */}
+      {selectedRequest && (
+        <div className="modal-backdrop">
+          <div className="modal-dialog modal-md">
+            <div className="modal-header">
+              <h3>Respond to Counselling Request</h3>
+              <button className="modal-close" onClick={() => setSelectedRequest(null)}>
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleUpdateRequest} className="modal-body">
+              <div style={{ marginBottom: "14px", background: "#f8fafc", padding: "12px", borderRadius: "8px" }}>
+                <strong>Student:</strong> {selectedRequest.student_name || `Student #${selectedRequest.student_id}`}
+                <br />
+                <strong>Preferred Mode:</strong> {selectedRequest.preferred_mode}
+                <br />
+                <strong>Question / Need:</strong>
+                <p style={{ margin: "4px 0 0", color: "#334155" }}>{selectedRequest.message}</p>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: "14px" }}>
+                <label>Update Status:</label>
+                <select
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  className="search-input"
+                >
+                  <option value="scheduled">Scheduled (Date & Time Provided)</option>
+                  <option value="completed">Completed / Answered</option>
+                  <option value="pending">Pending</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: "14px" }}>
+                <label>Meeting Instructions / Feedback / Notes:</label>
+                <textarea
+                  rows="4"
+                  placeholder="e.g. Scheduled for Friday at 4:00 PM via Google Meet link: meet.google.com/xyz or Meet in Room 204..."
+                  value={teacherNotes}
+                  onChange={(e) => setTeacherNotes(e.target.value)}
+                  required
+                  className="search-input"
+                  style={{ width: "100%" }}
+                />
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="action-btn-secondary"
+                  onClick={() => setSelectedRequest(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="action-btn-primary"
+                  disabled={savingNotes}
+                >
+                  {savingNotes ? "Saving..." : "Save & Notify Student"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Upload Guidance Document for RAG */}
+      {showUploadDocModal && (
+        <div className="modal-backdrop">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-header">
+              <h3>+ Upload Verified Guidance Document (RAG)</h3>
+              <button className="modal-close" onClick={() => setShowUploadDocModal(false)}>
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleUploadDoc} className="modal-body">
+              <p className="modal-instructions">
+                Upload verified brochures, syllabus notes, or entrance guidelines. This content will be chunked, indexed, and cited by the AI Assistant when responding to student inquiries.
+              </p>
+
+              <div className="info-grid-2col" style={{ marginBottom: "14px" }}>
+                <div>
+                  <label>Document Title:</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. KEAM 2025 Kerala Engineering Prospectus"
+                    value={docTitle}
+                    onChange={(e) => setDocTitle(e.target.value)}
+                    required
+                    className="search-input"
+                    style={{ width: "100%", marginTop: "4px" }}
+                  />
+                </div>
+                <div>
+                  <label>Document Type:</label>
+                  <select
+                    value={docType}
+                    onChange={(e) => setDocType(e.target.value)}
+                    className="search-input"
+                    style={{ width: "100%", marginTop: "4px" }}
+                  >
+                    <option value="exam">Entrance Exam Guide</option>
+                    <option value="course">Course Description / Roadmap</option>
+                    <option value="scholarship">Scholarship Details</option>
+                    <option value="study_abroad">Study Abroad Dossier</option>
+                    <option value="syllabus">Syllabus Topic Breakdown</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: "16px" }}>
+                <label>Verified Guidance Text / Content:</label>
+                <textarea
+                  rows="8"
+                  placeholder="Paste official prospectus text, eligibility criteria, exam patterns, deadlines, or fees here..."
+                  value={docContent}
+                  onChange={(e) => setDocContent(e.target.value)}
+                  required
+                  className="search-input"
+                  style={{ width: "100%", marginTop: "4px" }}
+                />
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="action-btn-secondary"
+                  onClick={() => setShowUploadDocModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="action-btn-primary"
+                  disabled={savingDoc}
+                >
+                  {savingDoc ? "Chunking & Generating Embeddings..." : "Upload & Index in RAG Database"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
