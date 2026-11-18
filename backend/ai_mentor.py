@@ -38,16 +38,25 @@ Student says: "{user_message}"
 Provide a friendly, highly encouraging, structured, and pedagogical response.
 If the student mentions or needs help with their weak topics, explain the key principles, give practical tips to overcome them, and suggest immediate study actions. Keep response concise, structured with bullet points or numbered steps."""
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}]
-            }
-            res = requests.post(url, json=payload, timeout=8)
-            if res.status_code == 200:
-                data = res.json()
-                text = data["candidates"][0]["content"]["parts"][0]["text"]
-                chips = generate_chips(weak_topics, user_message)
-                return text, referenced_weak, chips
+            models_to_try = [
+                os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
+                "gemini-3.8-flash",
+                "gemini-3.5-flash",
+            ]
+            for model_name in models_to_try:
+                try:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={gemini_key}"
+                    payload = {
+                        "contents": [{"parts": [{"text": prompt}]}]
+                    }
+                    res = requests.post(url, json=payload, timeout=8)
+                    if res.status_code == 200:
+                        data = res.json()
+                        text = data["candidates"][0]["content"]["parts"][0]["text"]
+                        chips = generate_chips(weak_topics, user_message)
+                        return text, referenced_weak, chips
+                except Exception:
+                    continue
         except Exception:
             pass # Fall through to fallback engine
 

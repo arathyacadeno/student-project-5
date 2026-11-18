@@ -30,10 +30,7 @@ from models import (
 router = APIRouter()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_URL = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-1.5-flash:generateContent"
-)
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 DISCLAIMER = (
     "\n\n⚠️ *Important:* Always verify exact dates, fees and eligibility on the "
     "official website before applying."
@@ -148,31 +145,51 @@ def _retrieve_chunks(query: str, db: Session, top_k: int = 5) -> List[dict]:
 
 
 def _call_gemini(prompt: str) -> str:
-    """Call Gemini 1.5 Flash and return the text response."""
-    if not GEMINI_API_KEY:
-        return "AI response unavailable — API key not configured."
+    """Call Google Gemini API using current models with intelligent fallback."""
+    api_key = os.getenv("GEMINI_API_KEY", GEMINI_API_KEY)
+    if not api_key:
+        return (
+            "Hello! I am your StudyMatch Assistant. AI live generation is currently "
+            "running in offline guidance mode because an API key is not configured. "
+            "Please explore the verified course roadmaps, exams, and scholarship modules above!"
+        )
 
     headers = {"Content-Type": "application/json"}
     body = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"maxOutputTokens": 1024, "temperature": 0.4},
     }
-    try:
-        resp = requests.post(
-            f"{GEMINI_URL}?key={GEMINI_API_KEY}",
-            json=body,
-            headers=headers,
-            timeout=30,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        candidates = data.get("candidates", [])
-        if candidates:
-            parts = candidates[0].get("content", {}).get("parts", [])
-            return "".join(p.get("text", "") for p in parts)
-        return "I couldn't generate a response. Please try again."
-    except Exception as exc:
-        return f"I encountered an issue reaching the AI service: {str(exc)[:100]}. Please try again later."
+
+    # Sequence of models to attempt (prioritize fast, current Gemini 3.5 flash models)
+    models_to_try = [
+        os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
+        "gemini-3.8-flash",
+        "gemini-3.5-flash",
+    ]
+
+    last_error = None
+    for model in models_to_try:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            resp = requests.post(url, json=body, headers=headers, timeout=12)
+            if resp.status_code == 200:
+                data = resp.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    return "".join(p.get("text", "") for p in parts)
+            else:
+                last_error = f"Model {model} returned status {resp.status_code}"
+        except Exception as exc:
+            last_error = str(exc)
+            continue
+
+    # Clean, helpful user-facing response if all live model requests encounter issues
+    return (
+        "Hello! I am here to help you navigate courses, entrance exams, and your personalized study plan. "
+        "I was unable to establish a live connection to the AI generation service right now. "
+        "You can check our verified guidance documents, exam guides, and mock tests in the meantime, or try asking again in a moment!"
+    )
 
 
 def _build_prompt(
