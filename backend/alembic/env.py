@@ -30,7 +30,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 # Override the sqlalchemy.url from alembic.ini with the value from .env
-config.set_main_option("sqlalchemy.url", str(DATABASE_URL))
+config.set_main_option("sqlalchemy.url", DATABASE_URL.render_as_string(hide_password=False))
 
 
 def run_migrations_offline() -> None:
