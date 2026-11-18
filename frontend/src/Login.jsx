@@ -1,74 +1,111 @@
-
 import { useState } from "react";
-import axios from "axios";
+import api from "./api";
 
-function Login({ onLogin }) {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [message, setMessage] = useState("");
-    const [student, setStudent] = useState(null);
+function Login({ onLogin, onSwitchToRegister }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setMessage("Logging in...");
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    setLoading(true);
 
-        try {
-            const response = await axios.post(
-                "http://127.0.0.1:8000/login",
-                {
-                    email: email,
-                    password: password
-                }
-            );
+    try {
+      const response = await api.post("/login", {
+        email: email.trim(),
+        password: password,
+      });
 
-            setStudent(response.data);
-            setMessage("Login successful!");
-            onLogin(response.data);
+      const userData = response.data;
+      localStorage.setItem("studymatch_token", userData.access_token);
+      localStorage.setItem(
+        "studymatch_user",
+        JSON.stringify({
+          id: userData.student_id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+        })
+      );
 
-        } catch (error) {
-            setStudent(null);
-            setMessage(
-                error.response?.data?.detail || "Login failed"
-            );
-        }
-    };
+      onLogin(userData);
+    } catch (error) {
+      setMessage(error.response?.data?.detail || "Login failed. Check your email and password.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="register-container">
-            <h1>StudyMatch AI</h1>
-            <h2>Student Login</h2>
+  const fillQuickDemo = (role) => {
+    if (role === "student") {
+      setEmail("student@studymatch.ai");
+      setPassword("password123");
+    } else {
+      setEmail("teacher@studymatch.ai");
+      setPassword("password123");
+    }
+  };
 
-            <form onSubmit={handleLogin}>
-                <input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
+  return (
+    <div className="auth-card">
+      <div className="auth-brand-head">
+        <span className="auth-logo">🎓</span>
+        <h1>StudyMatch AI</h1>
+        <p className="auth-subtitle">Sign in to your learning dashboard</p>
+      </div>
 
-                <input
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
-
-                <button type="submit">Login</button>
-            </form>
-
-            <p>{message}</p>
-
-            {student && (
-                <div>
-                    <h3>Welcome, {student.name}!</h3>
-                    <p>Email: {student.email}</p>
-                    <p>Student ID: {student.student_id}</p>
-                </div>
-            )}
+      <form onSubmit={handleLogin} className="auth-form">
+        <div className="form-field">
+          <label>Email Address</label>
+          <input
+            type="email"
+            placeholder="student@studymatch.ai"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
-    );
+
+        <div className="form-field">
+          <label>Password</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        <button type="submit" className="auth-submit-btn" disabled={loading}>
+          {loading ? "Signing in..." : "Sign In →"}
+        </button>
+      </form>
+
+      {message && <div className="auth-error-msg">{message}</div>}
+
+      <div className="demo-credentials-box">
+        <span>⚡ Quick Demo Logins:</span>
+        <div className="demo-btns-row">
+          <button type="button" onClick={() => fillQuickDemo("student")}>
+            Alex Morgan (Student)
+          </button>
+          <button type="button" onClick={() => fillQuickDemo("teacher")}>
+            Dr. Jenkins (Teacher)
+          </button>
+        </div>
+      </div>
+
+      <div className="auth-switch-footer">
+        Don't have an account?{" "}
+        <button type="button" className="link-button" onClick={onSwitchToRegister}>
+          Register here
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default Login;

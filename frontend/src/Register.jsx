@@ -1,73 +1,111 @@
-
 import { useState } from "react";
-import axios from "axios";
+import api from "./api";
 
-function Register() {
+function Register({ onSwitchToLogin }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("student");
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setMessage("Registering...");
+    setMessage("");
+    setLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://127.0.0.1:8000/register",
-        {
-          name: name,
-          email: email,
-          password: password
-        }
-      );
+      await api.post("/register", {
+        name: name.trim(),
+        email: email.trim(),
+        password: password,
+        role: role,
+      });
 
-      setMessage("Registration successful!");
-      setName("");
-      setEmail("");
-      setPassword("");
-
+      setSuccess(true);
+      setMessage("Registration successful! You can now log in.");
     } catch (error) {
-      setMessage(
-        error.response?.data?.detail || "Registration failed"
-      );
+      setSuccess(false);
+      setMessage(error.response?.data?.detail || "Registration failed. Try a different email.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="register-container">
-      <h1>StudyMatch AI</h1>
-      <h2>Student Registration</h2>
+    <div className="auth-card">
+      <div className="auth-brand-head">
+        <span className="auth-logo">🎓</span>
+        <h1>StudyMatch AI</h1>
+        <p className="auth-subtitle">Create your academic account</p>
+      </div>
 
-      <form onSubmit={handleRegister}>
-        <input
-          type="text"
-          placeholder="Enter your name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
+      <form onSubmit={handleRegister} className="auth-form">
+        <div className="form-field">
+          <label>Full Name</label>
+          <input
+            type="text"
+            placeholder="e.g. Alex Morgan"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
 
-        <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <div className="form-field">
+          <label>Email Address</label>
+          <input
+            type="email"
+            placeholder="alex@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-        <input
-          type="password"
-          placeholder="Enter your password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="form-field">
+          <label>Password (min 6 chars)</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+          />
+        </div>
 
-        <button type="submit">Register</button>
+        <div className="form-field">
+          <label>Role</label>
+          <select value={role} onChange={(e) => setRole(e.target.value)}>
+            <option value="student">Student (Peer Learner & Guidance)</option>
+            <option value="teacher">Teacher (Instructor & Dashboard)</option>
+          </select>
+        </div>
+
+        <button type="submit" className="auth-submit-btn" disabled={loading}>
+          {loading ? "Creating Account..." : "Create Account →"}
+        </button>
       </form>
 
-      <p>{message}</p>
+      {message && (
+        <div className={`auth-msg-banner ${success ? "success" : "error"}`}>
+          {message}
+          {success && (
+            <button className="link-button block-btn" onClick={onSwitchToLogin}>
+              Go to Login →
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="auth-switch-footer">
+        Already have an account?{" "}
+        <button type="button" className="link-button" onClick={onSwitchToLogin}>
+          Login here
+        </button>
+      </div>
     </div>
   );
 }

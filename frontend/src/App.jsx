@@ -1,58 +1,187 @@
-
 import { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 
 import Login from "./Login";
 import Register from "./Register";
-import Dashboard from "./Dashboard";
+import Layout from "./components/Layout";
+
+import StudentDashboard from "./pages/StudentDashboard";
+import StudyMaterials from "./pages/StudyMaterials";
+import CourseGuidance from "./pages/CourseGuidance";
+import AIMentor from "./pages/AIMentor";
+import MockTests from "./pages/MockTests";
+import CourseSummaries from "./pages/CourseSummaries";
+import PreviousPapers from "./pages/PreviousPapers";
+import TeacherDashboard from "./pages/TeacherDashboard";
 
 function App() {
-  const [page, setPage] = useState("login");
-  const [student, setStudent] = useState(null);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("studymatch_user");
+    return saved ? JSON.parse(saved) : null;
+  });
 
-  const handleLogin = (studentData) => {
-    setStudent(studentData);
-    setPage("dashboard");
+  const handleLogin = (userData) => {
+    const userObj = {
+      id: userData.student_id,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+    };
+    setUser(userObj);
   };
 
   const handleLogout = () => {
-    setStudent(null);
-    setPage("login");
+    localStorage.removeItem("studymatch_token");
+    localStorage.removeItem("studymatch_user");
+    setUser(null);
   };
 
-  if (page === "dashboard" && student) {
-    return (
-      <Dashboard
-        student={student}
-        onLogout={handleLogout}
-      />
-    );
-  }
-
   return (
-    <div className="auth-page">
-      {page === "login" ? (
-        <>
-          <Login onLogin={handleLogin} />
-          <p>
-            Don't have an account?{" "}
-            <button onClick={() => setPage("register")}>
-              Register
-            </button>
-          </p>
-        </>
-      ) : (
-        <>
-          <Register />
-          <p>
-            Already have an account?{" "}
-            <button onClick={() => setPage("login")}>
-              Login
-            </button>
-          </p>
-        </>
-      )}
-    </div>
+    <BrowserRouter>
+      <Routes>
+        {/* Public Auth Routes */}
+        <Route
+          path="/login"
+          element={
+            !user ? (
+              <div className="auth-wrapper">
+                <Login
+                  onLogin={handleLogin}
+                  onSwitchToRegister={() => (window.location.href = "/register")}
+                />
+              </div>
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/register"
+          element={
+            !user ? (
+              <div className="auth-wrapper">
+                <Register onSwitchToLogin={() => (window.location.href = "/login")} />
+              </div>
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
+        />
+
+        {/* Protected App Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <StudentDashboard user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/materials"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <StudyMaterials user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/guidance"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <CourseGuidance user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/mentor"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <AIMentor user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/mock-tests"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <MockTests user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/summaries"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <CourseSummaries user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/papers"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <PreviousPapers user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/teacher"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <TeacherDashboard user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        {/* Catch-all fallback */}
+        <Route
+          path="*"
+          element={<Navigate to={user ? "/dashboard" : "/login"} replace />}
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
