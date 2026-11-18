@@ -86,7 +86,6 @@ function CourseGuidance() {
       setCourses(res.data);
     } catch (err) {
       console.error(err);
-      // Fallback to general courses if recommend fails
       try {
         const fallback = await api.get("/api/v1/guidance/courses");
         setCourses(fallback.data.items || []);
@@ -190,12 +189,10 @@ function CourseGuidance() {
     }
   };
 
-  // Initial load
   useEffect(() => {
     fetchRecommendations();
   }, []);
 
-  // Tab switch effect
   useEffect(() => {
     if (activeTab === "roadmap") fetchRoadmap();
     if (activeTab === "exams") fetchExams();
@@ -367,24 +364,24 @@ function CourseGuidance() {
       : courses.filter((c) => c.stream?.toLowerCase().includes(streamFilter.toLowerCase()));
 
   return (
-    <div className="course-guidance-page">
-      {/* Header */}
-      <div className="page-header-row">
+    <div className="course-guidance-page compact-layout">
+      {/* Sleek Compact Header */}
+      <div className="page-header-row compact-header">
         <div>
           <h2>🎓 Higher Studies & Career Guidance</h2>
           <p className="page-subtitle">
-            Personalized academic roadmaps, entrance exams, premier colleges, scholarships, and ML-backed course recommendations.
+            Personalized academic roadmaps, entrance exams, premier colleges, scholarships, and ML-backed recommendations.
           </p>
         </div>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+        <div className="header-action-group">
           <button
-            className="action-btn-secondary"
+            className="action-btn-secondary btn-sm"
             onClick={() => setShowCounsellingModal(true)}
           >
             💬 Request Counselling
           </button>
           <button
-            className="action-btn-primary"
+            className="action-btn-primary btn-sm"
             onClick={openQuestionnaire}
           >
             ✍️ Retake Questionnaire
@@ -392,21 +389,21 @@ function CourseGuidance() {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="guidance-tabs-nav">
+      {/* Navigation Tabs — High Density, Wrap-Friendly Pills */}
+      <div className="guidance-tabs-nav compact-tabs">
         {[
-          { key: "recommended", label: "🌟 Recommended Courses" },
-          { key: "roadmap", label: "🗺️ Academic Roadmap" },
-          { key: "exams", label: "📝 Entrance Exams" },
-          { key: "colleges", label: "🏛️ Colleges & Rankings" },
-          { key: "scholarships", label: "💰 Scholarships & Loans" },
+          { key: "recommended", label: "🌟 Recommended" },
+          { key: "roadmap", label: "🗺️ Roadmap" },
+          { key: "exams", label: "📝 Exams" },
+          { key: "colleges", label: "🏛️ Colleges" },
+          { key: "scholarships", label: "💰 Scholarships" },
           { key: "study_abroad", label: "🌍 Study Abroad" },
-          { key: "checklist", label: "✅ Checklist & Deadlines" },
-          { key: "counselling", label: "🤝 Counselling Status" },
+          { key: "checklist", label: "✅ Checklist" },
+          { key: "counselling", label: "🤝 Counselling" },
         ].map((tab) => (
           <button
             key={tab.key}
-            className={`guidance-tab-btn ${activeTab === tab.key ? "active" : ""}`}
+            className={`guidance-tab-btn compact-pill ${activeTab === tab.key ? "active" : ""}`}
             onClick={() => setActiveTab(tab.key)}
           >
             {tab.label}
@@ -419,8 +416,7 @@ function CourseGuidance() {
          ───────────────────────────────────────────── */}
       {activeTab === "recommended" && (
         <div className="tab-pane-content">
-          {/* Action & Filter Bar */}
-          <div className="filter-actions-bar">
+          <div className="filter-actions-bar compact-bar">
             <div className="stream-filter-pills">
               {["All", "Engineering", "Computer Applications", "Science", "Health Sciences", "Commerce", "Humanities", "Law", "Design"].map(
                 (stream) => (
@@ -437,10 +433,10 @@ function CourseGuidance() {
 
             {compareIds.length >= 2 && (
               <button
-                className="action-btn-primary"
+                className="action-btn-primary btn-sm"
                 onClick={handleCompareClick}
               >
-                ⚖️ Compare Selected ({compareIds.length})
+                ⚖️ Compare ({compareIds.length})
               </button>
             )}
           </div>
@@ -458,7 +454,7 @@ function CourseGuidance() {
               onAction={openQuestionnaire}
             />
           ) : (
-            <div className="courses-grid">
+            <div className="courses-grid compact-grid">
               {displayedCourses.map((course) => {
                 const matchScore = course.match_score ?? course.match_percentage ?? 75;
                 const matchClass =
@@ -466,7 +462,7 @@ function CourseGuidance() {
                 const isCheckedForCompare = compareIds.includes(course.id);
 
                 return (
-                  <div key={course.id} className="course-card-enhanced">
+                  <div key={course.id} className="course-card-enhanced compact-card">
                     <div className="course-card-header">
                       <span className={`match-badge ${matchClass}`}>{matchScore}% Match</span>
                       <span className="degree-tag">{course.degree_level}</span>
@@ -475,42 +471,27 @@ function CourseGuidance() {
                     <h3 className="course-card-title">{course.title}</h3>
                     <div className="course-card-meta">
                       <span>🏷️ {course.stream}</span>
-                      <span>⏱️ {course.duration_years} Years</span>
+                      <span>⏱️ {course.duration_years} Yrs</span>
                     </div>
 
-                    <div className="match-reason-box">
+                    <div className="match-reason-box compact-reason">
                       💡 <strong>Why:</strong> {course.match_reason || course.recommended_reason || "Aligned with your learning goals"}
                     </div>
 
-                    <div className="card-key-details">
-                      <div>
-                        <strong>Fees:</strong> {course.fee_range || course.fees_range || "N/A"}
-                      </div>
-                      <div>
-                        <strong>Salary:</strong> {course.salary_range || "Competitive"}
-                      </div>
+                    <div className="card-key-details compact-details">
+                      <div><strong>Fees:</strong> {course.fee_range || course.fees_range || "N/A"}</div>
+                      <div><strong>Salary:</strong> {course.salary_range || "Competitive"}</div>
                     </div>
 
-                    {course.exams && course.exams.length > 0 && (
-                      <div className="card-exams-tags">
-                        <strong>Exams:</strong>{" "}
-                        {course.exams.slice(0, 3).map((ex, i) => (
-                          <span key={i} className="exam-tag-mini">
-                            {ex}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="card-bottom-actions">
+                    <div className="card-bottom-actions compact-actions">
                       <button
-                        className="action-btn-secondary btn-sm"
+                        className="action-btn-secondary btn-xs"
                         onClick={() => setSelectedCourse(course)}
                       >
-                        ℹ️ Details
+                        Details
                       </button>
                       <button
-                        className="action-btn-secondary btn-sm"
+                        className="action-btn-secondary btn-xs"
                         onClick={() => handleOpenCareerPath(course.id)}
                       >
                         🚀 Career Path
@@ -537,7 +518,7 @@ function CourseGuidance() {
          ───────────────────────────────────────────── */}
       {activeTab === "roadmap" && (
         <div className="tab-pane-content">
-          <div className="stream-filter-pills" style={{ marginBottom: "20px" }}>
+          <div className="stream-filter-pills" style={{ marginBottom: "14px" }}>
             {["All", "Science", "Commerce", "Humanities"].map((s) => (
               <button
                 key={s}
@@ -554,10 +535,10 @@ function CourseGuidance() {
           ) : roadmapItems.length === 0 ? (
             <EmptyState icon="🗺️" title="No roadmap items found" message="Try switching stream filters." />
           ) : (
-            <div className="roadmap-timeline">
+            <div className="roadmap-timeline compact-timeline">
               {roadmapItems.map((item, index) => (
-                <div key={item.id} className="roadmap-stage-card">
-                  <div className="stage-marker">
+                <div key={item.id} className="roadmap-stage-card compact-stage">
+                  <div className="stage-marker compact-marker">
                     <span className="stage-number">{index + 1}</span>
                     <span className="stage-name">{item.stage}</span>
                   </div>
@@ -570,9 +551,9 @@ function CourseGuidance() {
                     <p className="stage-desc">{item.description}</p>
 
                     {item.options && (
-                      <div className="roadmap-options-grid">
+                      <div className="roadmap-options-grid compact-options">
                         {item.options.map((opt, i) => (
-                          <div key={i} className="option-tile">
+                          <div key={i} className="option-tile compact-tile">
                             <strong>{opt.name}</strong>
                             <p>{opt.description}</p>
                           </div>
@@ -581,8 +562,8 @@ function CourseGuidance() {
                     )}
 
                     {item.next_steps && item.next_steps.length > 0 && (
-                      <div className="next-steps-box">
-                        <strong>📌 Actionable Next Steps:</strong>
+                      <div className="next-steps-box compact-steps">
+                        <strong>📌 Next Steps:</strong>
                         <ul>
                           {item.next_steps.map((step, i) => (
                             <li key={i}>{step}</li>
@@ -603,16 +584,16 @@ function CourseGuidance() {
          ───────────────────────────────────────────── */}
       {activeTab === "exams" && (
         <div className="tab-pane-content">
-          <div className="search-bar-row">
+          <div className="search-bar-row compact-search">
             <input
               type="text"
-              placeholder="🔍 Search exams by name, code, or stream (e.g. JEE, NEET, CLAT)..."
+              placeholder="🔍 Search exams (e.g. JEE, NEET, CLAT)..."
               value={examSearch}
               onChange={(e) => setExamSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && fetchExams()}
               className="search-input"
             />
-            <button className="action-btn-primary" onClick={fetchExams}>
+            <button className="action-btn-primary btn-sm" onClick={fetchExams}>
               Search
             </button>
           </div>
@@ -620,9 +601,9 @@ function CourseGuidance() {
           {examsLoading ? (
             <LoadingSpinner message="Loading entrance exams database..." />
           ) : (
-            <div className="exams-grid">
+            <div className="exams-grid compact-grid">
               {exams.map((exam) => (
-                <div key={exam.id} className="exam-card">
+                <div key={exam.id} className="exam-card compact-card">
                   <div className="exam-card-header">
                     <span className="exam-code-badge">{exam.code}</span>
                     <span className="stream-pill">{exam.stream}</span>
@@ -630,37 +611,36 @@ function CourseGuidance() {
                   <h3 className="exam-name">{exam.name}</h3>
                   <p className="exam-body-agency">🏛️ {exam.conducting_body}</p>
 
-                  <div className="exam-dates-box">
-                    <strong>📅 Important Timeline:</strong>
+                  <div className="exam-dates-box compact-dates">
                     {typeof exam.exam_dates === "object" && exam.exam_dates !== null ? (
-                      <ul>
+                      <div className="dates-chips-grid">
                         {Object.entries(exam.exam_dates).map(([k, v]) => (
-                          <li key={k}>
+                          <span key={k} className="date-chip">
                             <strong>{k}:</strong> {v}
-                          </li>
+                          </span>
                         ))}
-                      </ul>
+                      </div>
                     ) : (
                       <p>{JSON.stringify(exam.exam_dates)}</p>
                     )}
                   </div>
 
-                  <div className="exam-card-actions">
+                  <div className="exam-card-actions compact-actions">
                     <button
-                      className="action-btn-secondary btn-sm"
+                      className="action-btn-secondary btn-xs"
                       onClick={() => setSelectedExam(exam)}
                     >
-                      📖 Syllabus & Tips
+                      Syllabus & Tips
                     </button>
                     {exam.official_website_url && (
                       <a
                         href={exam.official_website_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="action-btn-primary btn-sm"
+                        className="action-btn-primary btn-xs"
                         style={{ textDecoration: "none" }}
                       >
-                        🌐 Official Site
+                        Official Site ↗
                       </a>
                     )}
                   </div>
@@ -676,16 +656,16 @@ function CourseGuidance() {
          ───────────────────────────────────────────── */}
       {activeTab === "colleges" && (
         <div className="tab-pane-content">
-          <div className="search-bar-row">
+          <div className="search-bar-row compact-search">
             <input
               type="text"
-              placeholder="🔍 Search colleges by name or location (e.g. IIT, AIIMS, Delhi)..."
+              placeholder="🔍 Search colleges by name or city..."
               value={collegeSearch}
               onChange={(e) => setCollegeSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && fetchColleges()}
               className="search-input"
             />
-            <button className="action-btn-primary" onClick={fetchColleges}>
+            <button className="action-btn-primary btn-sm" onClick={fetchColleges}>
               Search
             </button>
           </div>
@@ -693,40 +673,31 @@ function CourseGuidance() {
           {collegesLoading ? (
             <LoadingSpinner message="Fetching colleges & NIRF ranking information..." />
           ) : (
-            <div className="colleges-grid">
+            <div className="colleges-grid compact-grid">
               {colleges.map((col) => (
-                <div key={col.id} className="college-card">
+                <div key={col.id} className="college-card compact-card">
                   <div className="college-card-top">
                     <div>
                       <h3 className="college-name">{col.name}</h3>
                       <span className="college-location">📍 {col.location}</span>
                     </div>
                     {col.nirf_ranking && (
-                      <div className="nirf-rank-badge">
+                      <div className="nirf-rank-badge compact-nirf">
                         <span className="rank-num">#{col.nirf_ranking}</span>
                         <span className="rank-label">NIRF</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="college-details-list">
-                    <div>
-                      <strong>Type:</strong> {col.college_type}
-                    </div>
-                    <div>
-                      <strong>Est:</strong> {col.established_year || "N/A"}
-                    </div>
-                    <div>
-                      <strong>Avg Fees:</strong> {col.average_annual_fee || "Varies"}
-                    </div>
-                    <div>
-                      <strong>Admission:</strong> {col.admission_process}
-                    </div>
+                  <div className="college-details-list compact-details">
+                    <div><strong>Type:</strong> {col.college_type}</div>
+                    <div><strong>Fees:</strong> {col.average_annual_fee || "Varies"}</div>
+                    <div><strong>Admission:</strong> {col.admission_process}</div>
                   </div>
 
                   {col.courses_offered && (
                     <div className="college-courses-pills">
-                      {col.courses_offered.map((crs, i) => (
+                      {col.courses_offered.slice(0, 4).map((crs, i) => (
                         <span key={i} className="course-pill">
                           {crs}
                         </span>
@@ -741,7 +712,7 @@ function CourseGuidance() {
                       rel="noreferrer"
                       className="college-web-link"
                     >
-                      🔗 Visit Official Website &rarr;
+                      Visit Website →
                     </a>
                   )}
                 </div>
@@ -756,14 +727,14 @@ function CourseGuidance() {
          ───────────────────────────────────────────── */}
       {activeTab === "scholarships" && (
         <div className="tab-pane-content">
-          <div className="stream-filter-pills" style={{ marginBottom: "20px" }}>
+          <div className="stream-filter-pills" style={{ marginBottom: "14px" }}>
             {["All", "Merit", "Need-based"].map((cat) => (
               <button
                 key={cat}
                 className={`filter-pill ${scholarshipCategory === cat ? "active" : ""}`}
                 onClick={() => setScholarshipCategory(cat)}
               >
-                {cat} Scholarships
+                {cat}
               </button>
             ))}
           </div>
@@ -771,9 +742,9 @@ function CourseGuidance() {
           {scholarshipsLoading ? (
             <LoadingSpinner message="Loading scholarships & financial aid..." />
           ) : (
-            <div className="scholarships-grid">
+            <div className="scholarships-grid compact-grid">
               {scholarships.map((sch) => (
-                <div key={sch.id} className="scholarship-card">
+                <div key={sch.id} className="scholarship-card compact-card">
                   <div className="scholarship-header">
                     <span className="category-tag">{sch.category}</span>
                     <span className="deadline-badge">⏰ {sch.deadline_description}</span>
@@ -782,28 +753,23 @@ function CourseGuidance() {
                   <h3 className="scholarship-title">{sch.name}</h3>
                   <p className="scholarship-provider">🏛️ {sch.provider}</p>
 
-                  <div className="amount-banner">
-                    💰 <strong>Benefits:</strong> {sch.amount_and_benefits}
+                  <div className="amount-banner compact-banner">
+                    💰 {sch.amount_and_benefits}
                   </div>
 
-                  <div className="eligibility-box">
-                    <strong>Eligibility:</strong>
-                    <p>{sch.eligibility}</p>
+                  <div className="eligibility-box compact-eligibility">
+                    <strong>Eligibility:</strong> {sch.eligibility}
                   </div>
-
-                  <p className="app-process-text">
-                    <strong>How to apply:</strong> {sch.application_process}
-                  </p>
 
                   {sch.application_url && (
                     <a
                       href={sch.application_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="action-btn-primary btn-sm"
-                      style={{ textDecoration: "none", display: "inline-block", marginTop: "10px" }}
+                      className="action-btn-primary btn-xs"
+                      style={{ textDecoration: "none", alignSelf: "flex-start", marginTop: "auto" }}
                     >
-                      Apply on Portal &rarr;
+                      Apply on Portal ↗
                     </a>
                   )}
                 </div>
@@ -814,61 +780,70 @@ function CourseGuidance() {
       )}
 
       {/* ─────────────────────────────────────────────
-          TAB 6: STUDY ABROAD
+          TAB 6: STUDY ABROAD (HIGH INFORMATION DENSITY)
          ───────────────────────────────────────────── */}
       {activeTab === "study_abroad" && (
         <div className="tab-pane-content">
           {studyAbroadLoading ? (
             <LoadingSpinner message="Loading study abroad guide..." />
           ) : (
-            <div className="study-abroad-grid">
+            <div className="study-abroad-grid compact-grid">
               {studyAbroad.map((country) => (
-                <div key={country.id} className="study-abroad-card">
-                  <div className="country-card-header">
-                    <span className="country-flag">{country.flag_emoji}</span>
-                    <h3>{country.country}</h3>
-                  </div>
-
-                  <div className="country-costs-box">
-                    <div>
-                      <strong>Tuition:</strong> {country.avg_tuition_cost}
-                    </div>
-                    <div>
-                      <strong>Living:</strong> {country.living_cost}
+                <div key={country.id} className="study-abroad-card compact-country-card">
+                  {/* Country Header with unified Flag & Title Row */}
+                  <div className="country-card-header compact-country-header">
+                    <div className="country-title-row">
+                      <span className="country-code-pill">🌐 {country.country}</span>
                     </div>
                   </div>
 
-                  <div className="country-info-row">
-                    <strong>📝 Required Exams:</strong>
-                    <div className="pills-wrap">
+                  {/* Sleek 2-Stat Cost Bar */}
+                  <div className="country-costs-box compact-costs">
+                    <div className="cost-item">
+                      <span className="cost-label">Tuition:</span>
+                      <span className="cost-val">{country.avg_tuition_cost}</span>
+                    </div>
+                    <div className="cost-item">
+                      <span className="cost-label">Living:</span>
+                      <span className="cost-val">{country.living_cost}</span>
+                    </div>
+                  </div>
+
+                  {/* Required Exams Tags */}
+                  <div className="country-info-row compact-row">
+                    <span className="row-label">📝 Required Exams:</span>
+                    <div className="pills-wrap compact-pills">
                       {country.required_tests?.map((t, i) => (
-                        <span key={i} className="test-tag">
+                        <span key={i} className="test-tag compact-tag">
                           {t}
                         </span>
                       ))}
                     </div>
                   </div>
 
-                  <div className="country-info-row">
-                    <strong>🌟 Popular Tracks:</strong>
-                    <p>{country.popular_courses?.join(", ")}</p>
+                  {/* Popular Tracks */}
+                  <div className="country-info-row compact-row">
+                    <span className="row-label">🌟 Popular Tracks:</span>
+                    <span className="row-value">{country.popular_courses?.join(", ")}</span>
                   </div>
 
-                  <div className="country-info-row">
-                    <strong>🛂 Visa & Post-Study Work Rights:</strong>
-                    <p>{country.visa_work_rights}</p>
+                  {/* Visa & Work Rights */}
+                  <div className="country-info-row compact-row">
+                    <span className="row-label">🛂 Visa & Work Rights:</span>
+                    <p className="visa-text-compact">{country.visa_work_rights}</p>
                   </div>
 
+                  {/* Primary Intakes as Compact Chip Row */}
                   {country.intake_timelines && (
-                    <div className="intakes-box">
-                      <strong>📅 Primary Intakes:</strong>
-                      <ul>
+                    <div className="intakes-box compact-intakes">
+                      <span className="intakes-heading">📅 Key Intakes:</span>
+                      <div className="intakes-chips-list">
                         {Object.entries(country.intake_timelines).map(([k, v]) => (
-                          <li key={k}>
+                          <span key={k} className="intake-chip">
                             <strong>{k}:</strong> {v}
-                          </li>
+                          </span>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -883,15 +858,13 @@ function CourseGuidance() {
          ───────────────────────────────────────────── */}
       {activeTab === "checklist" && (
         <div className="tab-pane-content">
-          <div className="page-header-row" style={{ marginBottom: "16px" }}>
+          <div className="page-header-row compact-header" style={{ marginBottom: "12px" }}>
             <div>
-              <h3>My College & Exam Application Tracker</h3>
-              <p className="page-subtitle">
-                Track personal deadlines and never miss exam registrations or scholarship deadlines.
-              </p>
+              <h3>Application Tracker & Deadlines</h3>
+              <p className="page-subtitle">Track important dates and personal submission checklists.</p>
             </div>
             <button
-              className="action-btn-primary"
+              className="action-btn-primary btn-sm"
               onClick={() => setShowAddChecklistModal(true)}
             >
               + Add Item
@@ -900,14 +873,14 @@ function CourseGuidance() {
 
           {/* Upcoming Reminders Alert Banner */}
           {reminders.length > 0 && (
-            <div className="reminders-alert-box">
-              <h4>⏰ Upcoming High-Priority Deadlines</h4>
+            <div className="reminders-alert-box compact-reminders">
+              <h4>⏰ Upcoming Priority Deadlines</h4>
               <div className="reminders-list">
                 {reminders.map((rem) => (
                   <div key={rem.id} className="reminder-item-row">
                     <span className="reminder-title">{rem.title}</span>
                     <span className="days-left-badge">
-                      {rem.days_left <= 0 ? "Due Today" : `${rem.days_left} days remaining`}
+                      {rem.days_left <= 0 ? "Due Today" : `${rem.days_left}d left`}
                     </span>
                   </div>
                 ))}
@@ -926,11 +899,11 @@ function CourseGuidance() {
               onAction={() => setShowAddChecklistModal(true)}
             />
           ) : (
-            <div className="checklist-items-table">
+            <div className="checklist-items-table compact-table">
               {checklist.map((item) => (
                 <div
                   key={item.id}
-                  className={`checklist-item-card ${item.is_completed ? "completed" : ""}`}
+                  className={`checklist-item-card compact-card ${item.is_completed ? "completed" : ""}`}
                 >
                   <label className="checkbox-wrap">
                     <input
@@ -966,18 +939,16 @@ function CourseGuidance() {
          ───────────────────────────────────────────── */}
       {activeTab === "counselling" && (
         <div className="tab-pane-content">
-          <div className="page-header-row">
+          <div className="page-header-row compact-header">
             <div>
-              <h3>Personal Academic Counselling Requests</h3>
-              <p className="page-subtitle">
-                Consult with your teachers and mentors for personalized higher-education advice.
-              </p>
+              <h3>Personal Academic Counselling</h3>
+              <p className="page-subtitle">Track your requests and scheduled sessions with teachers.</p>
             </div>
             <button
-              className="action-btn-primary"
+              className="action-btn-primary btn-sm"
               onClick={() => setShowCounsellingModal(true)}
             >
-              + New Counselling Request
+              + New Request
             </button>
           </div>
 
@@ -994,7 +965,7 @@ function CourseGuidance() {
           ) : (
             <div className="counselling-list">
               {counsellingList.map((req) => (
-                <div key={req.id} className="counselling-card">
+                <div key={req.id} className="counselling-card compact-card">
                   <div className="counselling-header">
                     <span className={`status-badge status-${req.status}`}>
                       {req.status.toUpperCase()}
@@ -1006,13 +977,13 @@ function CourseGuidance() {
                   </div>
 
                   <div className="counselling-msg">
-                    <strong>My Question / Concern:</strong>
+                    <strong>My Inquiry:</strong>
                     <p>{req.message}</p>
                   </div>
 
                   {req.teacher_notes && (
-                    <div className="teacher-notes-box">
-                      <strong>👨‍🏫 Teacher Feedback / Schedule:</strong>
+                    <div className="teacher-notes-box compact-notes">
+                      <strong>👨‍🏫 Teacher Instructions / Schedule:</strong>
                       <p>{req.teacher_notes}</p>
                     </div>
                   )}
@@ -1024,8 +995,10 @@ function CourseGuidance() {
       )}
 
       {/* ─────────────────────────────────────────────
-          MODAL: QUESTIONNAIRE
+          MODALS
          ───────────────────────────────────────────── */}
+
+      {/* Questionnaire Modal */}
       {showQuizModal && (
         <div className="modal-backdrop">
           <div className="modal-dialog modal-lg">
@@ -1092,9 +1065,7 @@ function CourseGuidance() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────
-          MODAL: COURSE DETAILS
-         ───────────────────────────────────────────── */}
+      {/* Course Details Modal */}
       {selectedCourse && (
         <div className="modal-backdrop">
           <div className="modal-dialog modal-md">
@@ -1119,18 +1090,10 @@ function CourseGuidance() {
               </div>
 
               <div className="info-grid-2col">
-                <div>
-                  <strong>Duration:</strong> {selectedCourse.duration_years} Years
-                </div>
-                <div>
-                  <strong>Estimated Fees:</strong> {selectedCourse.fee_range || selectedCourse.fees_range}
-                </div>
-                <div>
-                  <strong>Salary Range:</strong> {selectedCourse.salary_range || "Competitive"}
-                </div>
-                <div>
-                  <strong>Eligibility:</strong> {selectedCourse.eligibility}
-                </div>
+                <div><strong>Duration:</strong> {selectedCourse.duration_years} Years</div>
+                <div><strong>Estimated Fees:</strong> {selectedCourse.fee_range || selectedCourse.fees_range}</div>
+                <div><strong>Salary Range:</strong> {selectedCourse.salary_range || "Competitive"}</div>
+                <div><strong>Eligibility:</strong> {selectedCourse.eligibility}</div>
               </div>
 
               {selectedCourse.skills_needed && (
@@ -1153,12 +1116,12 @@ function CourseGuidance() {
                 </div>
               )}
 
-              <div className="modal-footer" style={{ marginTop: "20px" }}>
+              <div className="modal-footer" style={{ marginTop: "16px" }}>
                 <button
                   className="action-btn-secondary"
                   onClick={() => handleOpenCareerPath(selectedCourse.id)}
                 >
-                  🚀 View Full Career Roadmap
+                  🚀 Career Roadmap
                 </button>
                 <button
                   className="action-btn-primary"
@@ -1172,9 +1135,7 @@ function CourseGuidance() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────
-          MODAL: COURSE COMPARISON (Side-by-Side)
-         ───────────────────────────────────────────── */}
+      {/* Compare Modal */}
       {showCompareModal && (
         <div className="modal-backdrop">
           <div className="modal-dialog modal-xl">
@@ -1206,12 +1167,6 @@ function CourseGuidance() {
                         ))}
                       </tr>
                       <tr>
-                        <td><strong>Degree Level</strong></td>
-                        {compareData.map((c) => (
-                          <td key={c.id}>{c.degree_level}</td>
-                        ))}
-                      </tr>
-                      <tr>
                         <td><strong>Duration</strong></td>
                         {compareData.map((c) => (
                           <td key={c.id}>{c.duration_years} Years</td>
@@ -1236,21 +1191,15 @@ function CourseGuidance() {
                         ))}
                       </tr>
                       <tr>
-                        <td><strong>Accepted Entrance Exams</strong></td>
+                        <td><strong>Accepted Exams</strong></td>
                         {compareData.map((c) => (
                           <td key={c.id}>{c.exams?.join(", ") || "N/A"}</td>
                         ))}
                       </tr>
                       <tr>
-                        <td><strong>Eligibility Criteria</strong></td>
+                        <td><strong>Eligibility</strong></td>
                         {compareData.map((c) => (
                           <td key={c.id} style={{ fontSize: "12px" }}>{c.eligibility}</td>
-                        ))}
-                      </tr>
-                      <tr>
-                        <td><strong>Top Colleges</strong></td>
-                        {compareData.map((c) => (
-                          <td key={c.id}>{c.top_colleges?.join(", ") || "N/A"}</td>
                         ))}
                       </tr>
                     </tbody>
@@ -1264,9 +1213,7 @@ function CourseGuidance() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────
-          MODAL: CAREER PATH EXPLORER
-         ───────────────────────────────────────────── */}
+      {/* Career Path Modal */}
       {showCareerModal && (
         <div className="modal-backdrop">
           <div className="modal-dialog modal-lg">
@@ -1278,14 +1225,14 @@ function CourseGuidance() {
             </div>
             <div className="modal-body-scrollable">
               {careerPathLoading ? (
-                <LoadingSpinner message="Mapping career roadmap and higher-study paths..." />
+                <LoadingSpinner message="Mapping career roadmap..." />
               ) : careerPathData ? (
                 <div>
-                  <div className="career-path-hero">
+                  <div className="career-path-hero compact-hero">
                     <h2>{careerPathData.course_title}</h2>
                     <span className="stream-badge">{careerPathData.stream}</span>
-                    <p style={{ marginTop: "8px" }}>
-                      <strong>Estimated Salary Range:</strong> {careerPathData.salary_range}
+                    <p style={{ marginTop: "6px" }}>
+                      <strong>Salary Outlook:</strong> {careerPathData.salary_range}
                     </p>
                   </div>
 
@@ -1313,19 +1260,10 @@ function CourseGuidance() {
                   </div>
 
                   <div className="career-section">
-                    <h4>🎓 Higher Study & Specialisation Options:</h4>
+                    <h4>🎓 Higher Study & Certifications:</h4>
                     <ul>
                       {careerPathData.higher_study_options?.map((hs, i) => (
                         <li key={i}>{hs}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="career-section">
-                    <h4>📜 Recommended Professional Certifications:</h4>
-                    <ul>
-                      {careerPathData.recommended_certifications?.map((cert, i) => (
-                        <li key={i}>{cert}</li>
                       ))}
                     </ul>
                   </div>
@@ -1338,9 +1276,7 @@ function CourseGuidance() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────
-          MODAL: EXAM DETAILS & SYLLABUS
-         ───────────────────────────────────────────── */}
+      {/* Exam Details Modal */}
       {selectedExam && (
         <div className="modal-backdrop">
           <div className="modal-dialog modal-md">
@@ -1357,7 +1293,7 @@ function CourseGuidance() {
               </div>
 
               <div className="info-section">
-                <h4>Eligibility Criteria:</h4>
+                <h4>Eligibility:</h4>
                 <p>{selectedExam.eligibility}</p>
               </div>
 
@@ -1367,29 +1303,24 @@ function CourseGuidance() {
               </div>
 
               <div className="info-section">
-                <h4>Application Process:</h4>
-                <p>{selectedExam.application_process}</p>
-              </div>
-
-              <div className="info-section">
                 <h4>💡 Preparation Tips:</h4>
                 <p>{selectedExam.preparation_tips}</p>
               </div>
 
-              <div className="modal-footer" style={{ marginTop: "20px" }}>
+              <div className="modal-footer" style={{ marginTop: "16px" }}>
                 {selectedExam.official_website_url && (
                   <a
                     href={selectedExam.official_website_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="action-btn-primary"
+                    className="action-btn-primary btn-sm"
                     style={{ textDecoration: "none" }}
                   >
-                    Official Portal &rarr;
+                    Official Portal ↗
                   </a>
                 )}
                 <button
-                  className="action-btn-secondary"
+                  className="action-btn-secondary btn-sm"
                   onClick={() => setSelectedExam(null)}
                 >
                   Close
@@ -1400,24 +1331,22 @@ function CourseGuidance() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────
-          MODAL: ADD CHECKLIST ITEM
-         ───────────────────────────────────────────── */}
+      {/* Add Checklist Modal */}
       {showAddChecklistModal && (
         <div className="modal-backdrop">
           <div className="modal-dialog modal-sm">
             <div className="modal-header">
-              <h3>+ Track Application or Exam</h3>
+              <h3>+ Track Application</h3>
               <button className="modal-close" onClick={() => setShowAddChecklistModal(false)}>
                 &times;
               </button>
             </div>
             <form onSubmit={handleAddChecklist} className="modal-body">
-              <div className="form-group" style={{ marginBottom: "14px" }}>
-                <label>Title / Task Name:</label>
+              <div className="form-group" style={{ marginBottom: "12px" }}>
+                <label>Task / Application Name:</label>
                 <input
                   type="text"
-                  placeholder="e.g. Fill JEE Main Session 1 Application"
+                  placeholder="e.g. JEE Main Application"
                   value={newChecklistTitle}
                   onChange={(e) => setNewChecklistTitle(e.target.value)}
                   required
@@ -1425,7 +1354,7 @@ function CourseGuidance() {
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: "14px" }}>
+              <div className="form-group" style={{ marginBottom: "12px" }}>
                 <label>Category:</label>
                 <select
                   value={newChecklistCategory}
@@ -1435,12 +1364,11 @@ function CourseGuidance() {
                   <option value="Exam">Entrance Exam</option>
                   <option value="College">College Application</option>
                   <option value="Scholarship">Scholarship</option>
-                  <option value="Document">Documentation / Certificate</option>
-                  <option value="Visa">Visa / Passport</option>
+                  <option value="Document">Documentation</option>
                 </select>
               </div>
 
-              <div className="form-group" style={{ marginBottom: "14px" }}>
+              <div className="form-group" style={{ marginBottom: "12px" }}>
                 <label>Target Deadline (Optional):</label>
                 <input
                   type="date"
@@ -1467,40 +1395,34 @@ function CourseGuidance() {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────
-          MODAL: REQUEST COUNSELLING
-         ───────────────────────────────────────────── */}
+      {/* Request Counselling Modal */}
       {showCounsellingModal && (
         <div className="modal-backdrop">
           <div className="modal-dialog modal-md">
             <div className="modal-header">
-              <h3>💬 Request Academic & Career Counselling</h3>
+              <h3>💬 Request Academic Counselling</h3>
               <button className="modal-close" onClick={() => setShowCounsellingModal(false)}>
                 &times;
               </button>
             </div>
             <form onSubmit={handleCounsellingSubmit} className="modal-body">
-              <p className="modal-instructions">
-                Send your doubts or college queries to your class teachers. They can guide you on course choices and entrance exam strategies.
-              </p>
-
-              <div className="form-group" style={{ marginBottom: "14px" }}>
-                <label>Preferred Meeting Mode:</label>
+              <div className="form-group" style={{ marginBottom: "12px" }}>
+                <label>Preferred Mode:</label>
                 <select
                   value={counsellingMode}
                   onChange={(e) => setCounsellingMode(e.target.value)}
                   className="search-input"
                 >
-                  <option value="Online">Online Video / Chat Session</option>
-                  <option value="In-person">In-person Meeting at Campus</option>
+                  <option value="Online">Online Video / Chat</option>
+                  <option value="In-person">In-Person at Campus</option>
                 </select>
               </div>
 
               <div className="form-group" style={{ marginBottom: "14px" }}>
-                <label>What would you like guidance on?</label>
+                <label>Question or Doubt:</label>
                 <textarea
-                  rows="4"
-                  placeholder="e.g. I am confused between B.Tech CS and B.Sc Data Science. My math score is strong but physics is average..."
+                  rows="3"
+                  placeholder="Describe your questions regarding career paths, streams, or college choices..."
                   value={counsellingMessage}
                   onChange={(e) => setCounsellingMessage(e.target.value)}
                   required
@@ -1522,7 +1444,7 @@ function CourseGuidance() {
                   className="action-btn-primary"
                   disabled={submittingCounselling}
                 >
-                  {submittingCounselling ? "Submitting..." : "Send Request to Teachers"}
+                  {submittingCounselling ? "Submitting..." : "Send Request"}
                 </button>
               </div>
             </form>

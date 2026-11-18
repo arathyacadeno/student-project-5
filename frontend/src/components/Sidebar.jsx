@@ -19,21 +19,23 @@ function Sidebar({ user }) {
 
   return (
     <aside className="app-sidebar">
-      <div className="sidebar-menu-heading">NAVIGATION</div>
-      <nav className="sidebar-nav">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `sidebar-link ${isActive ? "active" : ""}`
-            }
-          >
-            <span className="sidebar-icon">{item.icon}</span>
-            <span className="sidebar-label">{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
+      <div className="sidebar-top">
+        <div className="sidebar-menu-heading">NAVIGATION</div>
+        <nav className="sidebar-nav">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `sidebar-link ${isActive ? "active" : ""}`
+              }
+            >
+              <span className="sidebar-icon">{item.icon}</span>
+              <span className="sidebar-label">{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      </div>
 
       <div className="sidebar-footer">
         <div className="sidebar-tip">
