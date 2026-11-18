@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import Depends, HTTPException, status
@@ -8,6 +9,8 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Student
+
+load_dotenv()
 
 SECRET_KEY = os.getenv("JWT_SECRET", "studymatch_jwt_secret_key_change_in_production_2026")
 ALGORITHM = "HS256"
