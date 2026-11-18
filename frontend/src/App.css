@@ -1,0 +1,166 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #e0eaff, #f5eaff);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.register-container {
+  width: 380px;
+  padding: 35px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+  text-align: center;
+}
+
+.register-container h1 {
+  color: #4f46e5;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.register-container h2 {
+  color: #333;
+  font-size: 21px;
+  margin-bottom: 25px;
+}
+
+.register-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.register-container input {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+}
+
+.register-container input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 4px rgba(79, 70, 229, 0.3);
+}
+
+.register-container button {
+  padding: 13px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.register-container button:hover {
+  background: #3730a3;
+}
+
+.register-container p {
+  margin-top: 15px;
+  color: #444;
+  font-size: 14px;
+}
+
+.register-container h3 {
+  margin-top: 20px;
+  color: #16a34a;
+}
+
+
+.dashboard {
+  width: 100%;
+  min-height: 100vh;
+  padding: 30px 5%;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.dashboard-header h1 {
+  color: #4f46e5;
+}
+
+.dashboard-header button,
+.feature-card button {
+  padding: 10px 20px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.welcome {
+  background: white;
+  padding: 30px;
+  margin: 30px 0;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+}
+
+.welcome h2 {
+  color: #3730a3;
+  margin-bottom: 10px;
+}
+
+.section-title {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.feature-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+}
+
+.feature-icon {
+  font-size: 35px;
+}
+
+.feature-card h3 {
+  margin: 15px 0 10px;
+  color: #3730a3;
+}
+
+.feature-card p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
