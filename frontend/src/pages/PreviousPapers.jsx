@@ -49,6 +49,38 @@ function PreviousPapers() {
     fetchPapers();
   }, [selectedSubject, selectedYear]);
 
+  const handleSubmitExam = useCallback(async () => {
+    if (!activePaper || submittingExam) return;
+    setSubmittingExam(true);
+    try {
+      const answersPayload = activePaper.questions.map((q) => ({
+        question_id: q.id,
+        selected_option: examAnswers[q.id] !== undefined ? examAnswers[q.id] : null,
+      }));
+
+      const timeSpent = activePaper.time_limit_minutes * 60 - examTimeLeft;
+
+      const res = await api.post(`/papers/${activePaper.id}/attempt`, {
+        paper_id: activePaper.id,
+        time_spent_seconds: Math.max(1, timeSpent),
+        answers: answersPayload,
+      });
+
+      setAttemptResult(res.data);
+      setViewMode("exam_result");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit exam attempt.");
+    } finally {
+      setSubmittingExam(false);
+    }
+  }, [activePaper, submittingExam, examAnswers, examTimeLeft]);
+
+  const handleAutoSubmitExam = useCallback(() => {
+    alert("⏰ Time is up! Submitting your examination answers.");
+    handleSubmitExam();
+  }, [handleSubmitExam]);
+
   // Exam Countdown Timer
   useEffect(() => {
     if (viewMode !== "timed_exam" || examTimeLeft <= 0) return;
@@ -65,7 +97,7 @@ function PreviousPapers() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [viewMode, examTimeLeft]);
+  }, [viewMode, examTimeLeft, handleAutoSubmitExam]);
 
   const handleOpenStudyMode = async (paperId) => {
     setLoadingPaper(true);
@@ -94,38 +126,6 @@ function PreviousPapers() {
       alert("Failed to start timed paper attempt.");
     } finally {
       setLoadingPaper(false);
-    }
-  };
-
-  const handleAutoSubmitExam = () => {
-    alert("⏰ Time is up! Submitting your examination answers.");
-    handleSubmitExam();
-  };
-
-  const handleSubmitExam = async () => {
-    if (!activePaper || submittingExam) return;
-    setSubmittingExam(true);
-    try {
-      const answersPayload = activePaper.questions.map((q) => ({
-        question_id: q.id,
-        selected_option: examAnswers[q.id] !== undefined ? examAnswers[q.id] : null,
-      }));
-
-      const timeSpent = activePaper.time_limit_minutes * 60 - examTimeLeft;
-
-      const res = await api.post(`/papers/${activePaper.id}/attempt`, {
-        paper_id: activePaper.id,
-        time_spent_seconds: Math.max(1, timeSpent),
-        answers: answersPayload,
-      });
-
-      setAttemptResult(res.data);
-      setViewMode("exam_result");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to submit exam attempt.");
-    } finally {
-      setSubmittingExam(false);
     }
   };
 
