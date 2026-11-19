@@ -43,8 +43,26 @@ class StudentProfile(Base):
     stream = Column(String(100))
     academic_level = Column(String(50))
     learning_goal = Column(String(255))
+    phone = Column(String(30), nullable=True)
+    department = Column(String(100), nullable=True)
+    semester = Column(String(20), nullable=True)
+    college = Column(String(150), nullable=True)
+    academic_info = Column(Text, nullable=True)
+    learning_interests = Column(JSON, nullable=True)
 
     student = relationship("Student", back_populates="profile")
+
+
+class TeacherProfile(Base):
+    __tablename__ = "teacher_profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    teacher_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), unique=True, nullable=False)
+    department = Column(String(100), nullable=True)
+    designation = Column(String(100), nullable=True)
+    college = Column(String(150), nullable=True)
+
+    teacher = relationship("Student", foreign_keys=[teacher_id])
 
 
 class SkillProfile(Base):
@@ -589,3 +607,156 @@ class DocumentEmbedding(Base):
     metadata_json = Column(JSON, nullable=True)
 
     document = relationship("GuidanceDocument", back_populates="embeddings")
+
+
+# =====================================================================
+# SUBJECT, TOPIC & DIAGNOSTIC QUIZ MODELS (DAY 1 - 3 FOUNDATION)
+# =====================================================================
+
+class Subject(Base):
+    __tablename__ = "subjects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, index=True, nullable=False)
+    code = Column(String(30), nullable=True)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    topics = relationship("Topic", back_populates="subject", cascade="all, delete-orphan")
+
+
+class Topic(Base):
+    __tablename__ = "topics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    subject_id = Column(Integer, ForeignKey("subjects.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(100), nullable=False)
+    order_index = Column(Integer, default=0)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    subject = relationship("Subject", back_populates="topics")
+    questions = relationship("Question", back_populates="topic", cascade="all, delete-orphan")
+    attempts = relationship("QuizAttempt", back_populates="topic", cascade="all, delete-orphan")
+    performances = relationship("TopicPerformance", back_populates="topic", cascade="all, delete-orphan")
+
+
+class Question(Base):
+    __tablename__ = "questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    topic_id = Column(Integer, ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
+    question_text = Column(Text, nullable=False)
+    options = Column(JSON, nullable=False) # list of string options
+    correct_answer = Column(Integer, nullable=False) # 0-indexed choice
+    explanation = Column(Text, nullable=True)
+    difficulty = Column(String(20), default="medium") # 'easy', 'medium', 'hard'
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    topic = relationship("Topic", back_populates="questions")
+
+
+class QuizAttempt(Base):
+    __tablename__ = "quiz_attempts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    topic_id = Column(Integer, ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
+    score = Column(Float, nullable=False)
+    total_marks = Column(Float, nullable=False)
+    accuracy = Column(Float, default=0.0)
+    time_taken_sec = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    student = relationship("Student")
+    topic = relationship("Topic", back_populates="attempts")
+    answers = relationship("QuizAnswer", back_populates="attempt", cascade="all, delete-orphan")
+
+
+class QuizAnswer(Base):
+    __tablename__ = "quiz_answers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    attempt_id = Column(Integer, ForeignKey("quiz_attempts.id", ondelete="CASCADE"), nullable=False)
+    question_id = Column(Integer, ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
+    selected_option = Column(Integer, nullable=False)
+    is_correct = Column(Boolean, default=False)
+
+    attempt = relationship("QuizAttempt", back_populates="answers")
+    question = relationship("Question")
+
+
+class TopicPerformance(Base):
+    __tablename__ = "topic_performances"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    topic_id = Column(Integer, ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
+    accuracy = Column(Float, default=0.0) # 0 to 100
+    attempt_count = Column(Integer, default=0)
+    status = Column(String(20), default="average") # 'weak', 'average', 'strong'
+    last_attempt_date = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    student = relationship("Student")
+    topic = relationship("Topic", back_populates="performances")
+
+
+# =====================================================================
+# STUDY GROUP & PEER TEACHING MODELS (DAY 3 FOUNDATION)
+# =====================================================================
+
+class StudyGroup(Base):
+    __tablename__ = "study_groups"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    subject_id = Column(Integer, ForeignKey("subjects.id", ondelete="SET NULL"), nullable=True)
+    status = Column(String(20), default="active") # 'active', 'completed', 'archived'
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    members = relationship("GroupMember", back_populates="group", cascade="all, delete-orphan")
+    teaching_pairs = relationship("TeachingPair", back_populates="group", cascade="all, delete-orphan")
+
+
+class GroupMember(Base):
+    __tablename__ = "group_members"
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("study_groups.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    role = Column(String(20), default="member") # 'lead', 'member'
+    joined_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    group = relationship("StudyGroup", back_populates="members")
+    student = relationship("Student")
+
+
+class TeachingPair(Base):
+    __tablename__ = "teaching_pairs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("study_groups.id", ondelete="CASCADE"), nullable=False)
+    tutor_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    learner_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    topic_id = Column(Integer, ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
+    reason = Column(Text, nullable=True)
+    status = Column(String(20), default="recommended") # 'recommended', 'accepted', 'completed'
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    group = relationship("StudyGroup", back_populates="teaching_pairs")
+    tutor = relationship("Student", foreign_keys=[tutor_id])
+    learner = relationship("Student", foreign_keys=[learner_id])
+    topic = relationship("Topic")
+
+
+class StudySchedule(Base):
+    __tablename__ = "study_schedules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    day_of_week = Column(String(20), nullable=False) # 'Monday', 'Tuesday', etc.
+    start_time = Column(String(10), nullable=False) # '17:00'
+    end_time = Column(String(10), nullable=False)   # '19:00'
+    is_available = Column(Boolean, default=True)
+
+    student = relationship("Student")

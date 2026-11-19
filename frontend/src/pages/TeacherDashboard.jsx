@@ -468,7 +468,7 @@ function TeacherDashboard({ user }) {
               </button>
             </div>
             <form onSubmit={handleUpdateRequest} className="modal-body">
-              <div style={{ marginBottom: "14px", background: "#f8fafc", padding: "12px", borderRadius: "8px" }}>
+              <div style={{ marginBottom: "14px", background: "#f8fafc", padding: "12px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
                 <strong>Student:</strong> {selectedRequest.student_name || `Student #${selectedRequest.student_id}`}
                 <br />
                 <strong>Preferred Mode:</strong> {selectedRequest.preferred_mode}

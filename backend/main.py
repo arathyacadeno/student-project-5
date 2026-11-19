@@ -30,8 +30,8 @@ from auth import (
 )
 from ai_mentor import get_mentor_response
 
-# New routers — Modules 4, 5, 6
-from routers import guidance, mock_tests_v2, chatbot
+# Core & Module routers
+from routers import auth, academic, guidance, mock_tests_v2, chatbot
 
 # Initialize database schema if not present
 Base.metadata.create_all(bind=engine)
@@ -51,7 +51,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount new routers
+# Mount all modular routers
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Module 1 - Authentication"])
+app.include_router(academic.router, prefix="/api/v1", tags=["Module 3 - Subject & Topic Management"])
 app.include_router(guidance.router, prefix="/api/v1/guidance", tags=["Module 4 - Higher Studies Guidance"])
 app.include_router(mock_tests_v2.router, prefix="/api/v1", tags=["Module 5 - Tests & Papers"])
 app.include_router(chatbot.router, prefix="/api/v1/chat", tags=["Module 6 - AI Chatbot"])

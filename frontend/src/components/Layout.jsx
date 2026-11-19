@@ -7,6 +7,7 @@ import ChatWidget from "./ChatWidget";
 function Layout({ user, onLogout, children }) {
   const location = useLocation();
   const isMentorPage = location.pathname === "/mentor";
+  const isTeacher = user?.role === "teacher";
 
   return (
     <div className="app-layout">
@@ -18,8 +19,8 @@ function Layout({ user, onLogout, children }) {
         </main>
       </div>
       <BottomNav user={user} />
-      {/* Floating AI Mentor Chatbot accessible everywhere except full mentor page */}
-      {!isMentorPage && <ChatWidget user={user} />}
+      {/* Floating AI Mentor Chatbot accessible everywhere for students except full mentor page */}
+      {!isMentorPage && !isTeacher && <ChatWidget user={user} />}
     </div>
   );
 }
