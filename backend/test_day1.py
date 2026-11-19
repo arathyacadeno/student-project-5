@@ -130,6 +130,15 @@ def run_day1_tests():
         print("=======================================================\n")
 
     finally:
+        # Remove test data so it never pollutes the real database
+        db.rollback()
+        test_user = db.query(Student).filter(Student.email == "day1_student@test.com").first()
+        if test_user:
+            db.delete(test_user)
+        test_sub = db.query(Subject).filter(Subject.name == "Cloud Computing & DevOps").first()
+        if test_sub:
+            db.delete(test_sub)
+        db.commit()
         db.close()
 
 
