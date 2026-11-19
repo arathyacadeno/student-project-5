@@ -85,7 +85,7 @@ def register_student(payload: StudentRegister, db: Session = Depends(get_db)):
             detail="Email is already registered"
         )
 
-    user_role = payload.role if payload.role in ["student", "teacher"] else "student"
+    user_role = "student"
     new_user = Student(
         name=payload.name,
         email=payload.email,

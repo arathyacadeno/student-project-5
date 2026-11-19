@@ -12,7 +12,9 @@ from models import Student
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("JWT_SECRET", "studymatch_jwt_secret_key_change_in_production_2026")
+SECRET_KEY = os.getenv("JWT_SECRET")
+if not SECRET_KEY:
+    raise RuntimeError("Missing JWT_SECRET. Add it to backend/.env")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 24 hours
 

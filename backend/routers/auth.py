@@ -103,9 +103,7 @@ def register_user(req: RegisterRequest, db: Session = Depends(get_db)):
             detail="A user with this email address already exists.",
         )
 
-    role_clean = req.role.strip().lower() if req.role else "student"
-    if role_clean not in ["student", "teacher"]:
-        role_clean = "student"
+    role_clean = "student"
 
     new_user = Student(
         name=req.name.strip(),

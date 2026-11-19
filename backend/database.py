@@ -5,11 +5,19 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 load_dotenv()
 
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "admin123")
+
+def _require(name):
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Missing {name}. Add it to backend/.env")
+    return value
+
+
+DB_USER = _require("DB_USER")
+DB_PASSWORD = _require("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
 DB_PORT = int(os.getenv("DB_PORT", "5432"))
-DB_NAME = os.getenv("DB_NAME", "studymatch_db")
+DB_NAME = _require("DB_NAME")
 
 DATABASE_URL = URL.create(
     drivername="postgresql+psycopg2",

@@ -5,7 +5,6 @@ function Register({ onSwitchToLogin }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("student");
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,7 +19,6 @@ function Register({ onSwitchToLogin }) {
         name: name.trim(),
         email: email.trim(),
         password: password,
-        role: role,
       });
 
       setSuccess(true);
@@ -38,7 +36,7 @@ function Register({ onSwitchToLogin }) {
       <div className="auth-brand-head">
         <span className="auth-logo">🎓</span>
         <h1>StudyMatch AI</h1>
-        <p className="auth-subtitle">Create your academic account</p>
+        <p className="auth-subtitle">Create your student account</p>
       </div>
 
       <form onSubmit={handleRegister} className="auth-form">
@@ -74,14 +72,6 @@ function Register({ onSwitchToLogin }) {
             required
             minLength={6}
           />
-        </div>
-
-        <div className="form-field">
-          <label>Role</label>
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="student">Student (Peer Learner & Guidance)</option>
-            <option value="teacher">Teacher (Instructor & Dashboard)</option>
-          </select>
         </div>
 
         <button type="submit" className="auth-submit-btn" disabled={loading}>
