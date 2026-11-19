@@ -99,9 +99,9 @@ class MLPredictRequest(BaseModel):
     score_pct: float = Field(..., ge=0, le=100)
     correct_answers: int = Field(..., ge=0)
     incorrect_answers: int = Field(..., ge=0)
-    avg_time_per_q: Optional[float] = 30.0
+    avg_time_per_q: Optional[float] = 45.0
     attempt_number: Optional[int] = 1
-    historical_accuracy: Optional[float] = 50.0
+    historical_accuracy: Optional[float] = None
 
 
 # ─────────────────────────────────────────────
@@ -406,7 +406,7 @@ def predict_topic_strength_api(req: MLPredictRequest):
         score_pct=req.score_pct,
         correct_answers=req.correct_answers,
         incorrect_answers=req.incorrect_answers,
-        avg_time_per_q=req.avg_time_per_q or 30.0,
+        avg_time_per_q=req.avg_time_per_q if req.avg_time_per_q is not None else 45.0,
         attempt_number=req.attempt_number or 1,
-        historical_accuracy=req.historical_accuracy or 50.0,
+        historical_accuracy=req.historical_accuracy,
     )

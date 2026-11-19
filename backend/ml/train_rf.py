@@ -30,49 +30,45 @@ LABEL_TO_INT = {"weak": 0, "average": 1, "strong": 2}
 
 def generate_training_data(n_samples: int = 1500, random_seed: int = 42) -> pd.DataFrame:
     """
-    Generate realistic labelled diagnostic quiz performance records.
-    Considers score, accuracy, attempt progression, and problem-solving speed.
+    Simulate realistic quiz records.
+
+    Each student has a hidden true mastery (0-1) for a topic. Quiz results are
+    noisy samples of it: correct answers ~ Binomial(n_questions, mastery), so short
+    quizzes are unreliable. The label is the TRUE mastery band, NOT the quiz score band,
+    so the model must combine score, history and speed instead of re-learning a threshold.
     """
-    np.random.seed(random_seed)
+    rng = np.random.default_rng(random_seed)
 
     records = []
-    # Distribute samples evenly across performance tiers with natural variance
     for _ in range(n_samples):
-        profile_tier = np.random.choice(["weak", "average", "strong"], p=[0.35, 0.40, 0.25])
-        attempt_num = np.random.choice([1, 2, 3, 4], p=[0.55, 0.25, 0.15, 0.05])
+        tier = rng.choice(["weak", "average", "strong"], p=[0.35, 0.40, 0.25])
+        loc, scale = {"weak": (0.33, 0.13), "average": (0.62, 0.09), "strong": (0.87, 0.07)}[tier]
+        mastery = float(np.clip(rng.normal(loc, scale), 0.02, 0.99))
 
-        if profile_tier == "weak":
-            score_pct = np.clip(np.random.normal(loc=32, scale=12), 0, 49.9)
-            correct = int(np.round(score_pct / 10))
-            incorrect = 10 - correct
-            avg_time = np.clip(np.random.normal(loc=65, scale=20), 15, 120)
-            hist_acc = np.clip(np.random.normal(loc=30, scale=12), 0, 52)
-            label = 0 # weak
+        n_q = int(rng.choice([3, 4, 5, 6, 8, 10]))
+        attempt_num = int(rng.choice([1, 2, 3, 4], p=[0.55, 0.25, 0.15, 0.05]))
 
-        elif profile_tier == "average":
-            score_pct = np.clip(np.random.normal(loc=62, scale=7), 50.0, 74.9)
-            correct = int(np.round(score_pct / 10))
-            incorrect = 10 - correct
-            avg_time = np.clip(np.random.normal(loc=45, scale=15), 12, 90)
-            hist_acc = np.clip(np.random.normal(loc=60, scale=8), 45, 75)
-            label = 1 # average
+        # Current attempt plus earlier attempts, each a noisy sample of mastery
+        accuracies = [rng.binomial(n_q, mastery) / n_q for _ in range(attempt_num)]
+        correct = int(round(accuracies[-1] * n_q))
+        incorrect = n_q - correct
+        score_pct = accuracies[-1] * 100.0
+        hist_acc = float(np.mean(accuracies) * 100.0)  # matches quiz.py: history includes this attempt
 
-        else: # strong
-            score_pct = np.clip(np.random.normal(loc=88, scale=7), 75.0, 100.0)
-            correct = int(np.round(score_pct / 10))
-            incorrect = 10 - correct
-            avg_time = np.clip(np.random.normal(loc=28, scale=10), 8, 60)
-            hist_acc = np.clip(np.random.normal(loc=85, scale=7), 72, 100)
-            label = 2 # strong
+        # Stronger students tend to answer faster, but with a lot of individual variation
+        avg_time = float(np.clip(rng.normal(70 - 45 * mastery, 18), 8, 120))
+
+        # True label = hidden mastery band
+        label = 0 if mastery < 0.50 else (1 if mastery < 0.75 else 2)
 
         records.append({
-            "score_pct": float(round(score_pct, 2)),
-            "correct_answers": int(correct),
-            "incorrect_answers": int(incorrect),
-            "avg_time_per_q": float(round(avg_time, 2)),
-            "attempt_number": int(attempt_num),
-            "historical_accuracy": float(round(hist_acc, 2)),
-            "target": int(label),
+            "score_pct": round(score_pct, 2),
+            "correct_answers": correct,
+            "incorrect_answers": incorrect,
+            "avg_time_per_q": round(avg_time, 2),
+            "attempt_number": attempt_num,
+            "historical_accuracy": round(hist_acc, 2),
+            "target": label,
         })
 
     return pd.DataFrame(records)

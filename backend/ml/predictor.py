@@ -28,9 +28,9 @@ def predict_topic_strength(
     score_pct: float,
     correct_answers: int,
     incorrect_answers: int,
-    avg_time_per_q: float = 30.0,
+    avg_time_per_q: float = 45.0,
     attempt_number: int = 1,
-    historical_accuracy: float = 50.0,
+    historical_accuracy: float = None,
 ) -> Dict[str, Any]:
     """
     Accepts student quiz performance metrics and predicts topic strength
@@ -45,6 +45,8 @@ def predict_topic_strength(
         }
     """
     bundle = get_model_bundle()
+    if historical_accuracy is None:
+        historical_accuracy = score_pct
     rf = bundle["model"]
     feature_names = bundle["feature_names"]
     class_labels = bundle["class_labels"]
