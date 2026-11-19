@@ -20,8 +20,14 @@ function StudentDashboard({ user }) {
   const [profile, setProfile] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [recommendedCourses, setRecommendedCourses] = useState([]);
+  const [myGroup, setMyGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // AI Revision Notes Modal State (Module 10)
+  const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [revisionNotes, setRevisionNotes] = useState(null);
+  const [loadingRevision, setLoadingRevision] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -36,18 +42,39 @@ function StudentDashboard({ user }) {
       setProfile(profRes.data);
       setMaterials(matRes.data.items || []);
 
-      // Also fetch top 2 course matches
+      // Also fetch top 2 course matches and assigned study group
       try {
-        const crsRes = await api.get("/api/v1/guidance/courses/recommend");
+        const [crsRes, grpRes] = await Promise.all([
+          api.get("/api/v1/guidance/courses/recommend"),
+          api.get("/api/v1/groups/my"),
+        ]);
         setRecommendedCourses((crsRes.data || []).slice(0, 2));
+        setMyGroup(grpRes.data);
       } catch (cErr) {
-        console.warn("Course recommendation preview fetch error:", cErr);
+        console.warn("Course recommendation or group fetch error:", cErr);
       }
     } catch (err) {
       console.error(err);
       setError("Failed to load dashboard data. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateRevisionNotes = async (topicName) => {
+    setShowRevisionModal(true);
+    setLoadingRevision(true);
+    setRevisionNotes(null);
+    try {
+      const res = await api.post("/api/v1/revision/generate", {
+        topic_name: topicName,
+        subject_name: "General Curriculum",
+      });
+      setRevisionNotes(res.data);
+    } catch (err) {
+      console.error("Error generating revision notes:", err);
+    } finally {
+      setLoadingRevision(false);
     }
   };
 
@@ -162,6 +189,13 @@ function StudentDashboard({ user }) {
                 <span className="pill-topic-name">{topic}</span>
                 <div className="pill-actions">
                   <button
+                    className="pill-action-ai-notes"
+                    onClick={() => handleGenerateRevisionNotes(topic)}
+                    title="Generate instant AI revision notes with key concepts & examples"
+                  >
+                    🚀 AI Notes
+                  </button>
+                  <button
                     className="pill-action-notes"
                     onClick={() => navigate(`/materials?search=${encodeURIComponent(topic)}`)}
                   >
@@ -176,6 +210,49 @@ function StudentDashboard({ user }) {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Assigned Study Group Preview (Module 7 & 8) */}
+      {myGroup && (
+        <section className="teacher-section-card" style={{ marginBottom: "24px" }}>
+          <div className="card-head-row">
+            <div>
+              <h3>👥 My Assigned Study Group: {myGroup.name}</h3>
+              <p className="subtext">
+                Balanced group of {myGroup.member_count} peers with complementary skill profiles ({myGroup.coverage_rate}% topic coverage)
+              </p>
+            </div>
+            <button
+              className="action-btn-primary btn-sm"
+              onClick={() => navigate("/groups")}
+            >
+              Open Study Group Hub →
+            </button>
+          </div>
+
+          <div className="group-dashboard-row" style={{ marginTop: "12px", display: "flex", gap: "16px", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: "260px", background: "#f8fafc", padding: "14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+              <strong style={{ fontSize: "13px", color: "#0f172a" }}>Group Peers:</strong>
+              <div className="pills-wrap" style={{ marginTop: "8px" }}>
+                {myGroup.members.map((m) => (
+                  <span key={m.student_id} className="degree-tag">
+                    {m.name} {m.student_id === user?.id && "(You)"}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ flex: 1, minWidth: "260px", background: "#f8fafc", padding: "14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+              <strong style={{ fontSize: "13px", color: "#0f172a" }}>Active Peer-Teaching Matches:</strong>
+              <p style={{ margin: "6px 0 0", fontSize: "12.5px", color: "#475569" }}>
+                🤝 {myGroup.teaching_pairs.length} pairings available &bull;{" "}
+                {myGroup.common_schedules.length > 0
+                  ? `Next common slot: ${myGroup.common_schedules[0].day_of_week} (${myGroup.common_schedules[0].start_time}-${myGroup.common_schedules[0].end_time})`
+                  : "Sync your weekly study times in Study Groups!"}
+              </p>
+            </div>
           </div>
         </section>
       )}
@@ -336,6 +413,95 @@ function StudentDashboard({ user }) {
           ))}
         </div>
       </section>
+
+      {/* Modal: AI Revision Notes (Module 10) */}
+      {showRevisionModal && (
+        <div className="modal-backdrop">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-header">
+              <h3>🚀 AI Revision Notes: {revisionNotes?.topic_name || "Topic Review"}</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowRevisionModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="modal-body-scrollable">
+              {loadingRevision ? (
+                <LoadingSpinner message="Generating pedagogical revision notes with Gemini..." />
+              ) : revisionNotes ? (
+                <div>
+                  <div className="revision-overview-box" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "14px", borderRadius: "8px", marginBottom: "16px" }}>
+                    <h4 style={{ color: "#166534", margin: "0 0 6px 0" }}>📖 Plain-Language Explanation</h4>
+                    <p style={{ margin: 0, color: "#1e293b", fontSize: "13.5px" }}>{revisionNotes.overview}</p>
+                  </div>
+
+                  <div className="revision-block" style={{ marginBottom: "16px" }}>
+                    <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a", marginBottom: "8px" }}>🔑 Key Concepts & Rules:</h4>
+                    <ul>
+                      {revisionNotes.key_concepts.map((kc, i) => (
+                        <li key={i} style={{ marginBottom: "4px" }}>{kc}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="revision-block" style={{ marginBottom: "16px" }}>
+                    <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a", marginBottom: "8px" }}>🧪 Practical Example:</h4>
+                    <div style={{ background: "#1e1b4b", color: "#e0e7ff", padding: "12px", borderRadius: "8px", fontFamily: "monospace", fontSize: "12.5px" }}>
+                      <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                        {revisionNotes.practical_example}
+                      </pre>
+                    </div>
+                  </div>
+
+                  <div className="revision-block" style={{ marginBottom: "16px" }}>
+                    <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a", marginBottom: "8px" }}>⚠️ Common Pitfalls to Avoid:</h4>
+                    <ul>
+                      {revisionNotes.common_pitfalls.map((cp, i) => (
+                        <li key={i} style={{ color: "#dc2626", marginBottom: "4px" }}>
+                          {cp}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="revision-block">
+                    <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a", marginBottom: "8px" }}>🎯 Rapid Practice Questions:</h4>
+                    {revisionNotes.practice_questions.map((pq, i) => (
+                      <div key={i} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "12px", borderRadius: "8px", marginBottom: "10px" }}>
+                        <strong>Q{i + 1}: {pq.question}</strong>
+                        <div style={{ margin: "6px 0" }}>
+                          {pq.options.map((opt, oI) => (
+                            <div key={oI} style={{ fontSize: "12.5px", color: "#334155" }}>
+                              {opt}
+                            </div>
+                          ))}
+                        </div>
+                        <p style={{ margin: "4px 0 0", color: "#16a34a", fontSize: "12px" }}>
+                          ✓ <strong>Answer:</strong> {pq.correct_answer} &bull; {pq.explanation}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p>Unable to generate revision notes at this time.</p>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="action-btn-primary"
+                onClick={() => setShowRevisionModal(false)}
+              >
+                Close & Review Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

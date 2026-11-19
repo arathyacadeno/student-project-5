@@ -28,6 +28,11 @@ function TeacherDashboard({ user }) {
   const [docContent, setDocContent] = useState("");
   const [savingDoc, setSavingDoc] = useState(false);
 
+  // Intelligent Study Groups State (Module 7 & 8)
+  const [studyGroups, setStudyGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [generatingGroups, setGeneratingGroups] = useState(false);
+
   const fetchStats = async () => {
     setLoading(true);
     setError(null);
@@ -66,10 +71,41 @@ function TeacherDashboard({ user }) {
     }
   };
 
+  const fetchStudyGroups = async () => {
+    setGroupsLoading(true);
+    try {
+      const res = await api.get("/api/v1/groups");
+      setStudyGroups(res.data || []);
+    } catch (err) {
+      console.error("Study groups fetch error:", err);
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
+
+  const handleRegenerateGroups = async () => {
+    setGeneratingGroups(true);
+    try {
+      const res = await api.post("/api/v1/groups/generate", {
+        min_size: 3,
+        max_size: 5,
+        reset_existing: true,
+      });
+      setStudyGroups(res.data || []);
+      alert("Study groups successfully re-balanced and optimized using Random Forest skill profiles!");
+    } catch (err) {
+      console.error("Group generation error:", err);
+      alert(err.response?.data?.detail || "Error generating study groups.");
+    } finally {
+      setGeneratingGroups(false);
+    }
+  };
+
   useEffect(() => {
     fetchStats();
     fetchCounsellingRequests();
     fetchGuidanceDocs();
+    fetchStudyGroups();
   }, []);
 
   const handleUpdateRequest = async (e) => {
@@ -262,6 +298,96 @@ function TeacherDashboard({ user }) {
                       >
                         Respond & Schedule →
                       </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Section: Balanced Study Groups & Peer Matching (Module 7 & 8) */}
+      <section className="teacher-section-card" style={{ marginBottom: "28px" }}>
+        <div className="card-head-row">
+          <div>
+            <h3>👥 Balanced Study Groups & Peer-Teaching Coverage (Module 7 & 8)</h3>
+            <p className="subtext">
+              Optimization algorithm matches 3–5 students per group ensuring weak topics are covered by peers with strong mastery
+            </p>
+          </div>
+          <button
+            className="action-btn-primary btn-sm"
+            onClick={handleRegenerateGroups}
+            disabled={generatingGroups}
+          >
+            {generatingGroups ? "Optimizing Groups..." : "⚡ Re-Run Intelligent Grouping"}
+          </button>
+        </div>
+
+        {groupsLoading ? (
+          <p>Analyzing student skill profiles and matching groups...</p>
+        ) : studyGroups.length === 0 ? (
+          <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+            No study groups generated yet. Click "Re-Run Intelligent Grouping" above to partition the class into balanced study groups.
+          </p>
+        ) : (
+          <div className="class-topics-table-wrapper">
+            <table className="teacher-table">
+              <thead>
+                <tr>
+                  <th>Group Name</th>
+                  <th>Members (3-5)</th>
+                  <th>Weak-Topic Coverage</th>
+                  <th>Teaching Pairs</th>
+                  <th>Uncovered Topics</th>
+                  <th>Schedule Matches</th>
+                </tr>
+              </thead>
+              <tbody>
+                {studyGroups.map((grp) => (
+                  <tr key={grp.id}>
+                    <td>
+                      <strong>{grp.name}</strong>
+                    </td>
+                    <td>
+                      <div className="pills-wrap">
+                        {grp.members.map((m) => (
+                          <span key={m.student_id} className="degree-tag">
+                            {m.name}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="match-badge match-high">
+                        {grp.coverage_rate}% Covered
+                      </span>
+                    </td>
+                    <td>
+                      <span className="stream-badge">
+                        🤝 {grp.teaching_pairs.length} Pairs
+                      </span>
+                    </td>
+                    <td>
+                      {grp.uncovered_topics.length > 0 ? (
+                        <div className="pills-wrap">
+                          {grp.uncovered_topics.map((t, idx) => (
+                            <span key={idx} className="test-tag" style={{ background: "#fee2e2", color: "#b91c1c" }}>
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ color: "#16a34a", fontSize: "12px", fontWeight: "600" }}>
+                          ✓ 100% Fully Covered
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <span style={{ fontSize: "12px", color: "#475569" }}>
+                        📅 {grp.common_schedules.length} overlap slots
+                      </span>
                     </td>
                   </tr>
                 ))}

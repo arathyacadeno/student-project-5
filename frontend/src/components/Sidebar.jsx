@@ -5,6 +5,8 @@ function Sidebar({ user }) {
 
   const navItems = [
     { to: "/dashboard", label: "Dashboard", icon: "📊" },
+    { to: "/quiz", label: "Topic Quiz", icon: "🎯" },
+    { to: "/groups", label: "Study Groups", icon: "👥" },
     { to: "/materials", label: "Study Materials", icon: "📚" },
     { to: "/guidance", label: "Course Guidance", icon: "🎓" },
     { to: "/mentor", label: "AI Mentor", icon: "🤖" },

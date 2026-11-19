@@ -7,6 +7,8 @@ import Register from "./Register";
 import Layout from "./components/Layout";
 
 import StudentDashboard from "./pages/StudentDashboard";
+import TopicQuiz from "./pages/TopicQuiz";
+import StudyGroups from "./pages/StudyGroups";
 import StudyMaterials from "./pages/StudyMaterials";
 import CourseGuidance from "./pages/CourseGuidance";
 import AIMentor from "./pages/AIMentor";
@@ -77,6 +79,32 @@ function App() {
             user ? (
               <Layout user={user} onLogout={handleLogout}>
                 <StudentDashboard user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/quiz"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <TopicQuiz user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/groups"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <StudyGroups user={user} />
               </Layout>
             ) : (
               <Navigate to="/login" replace />
