@@ -226,3 +226,43 @@ def test_legacy_register_cannot_create_teacher():
         assert res.json()["role"] == "student"
     finally:
         _delete_user(email)
+
+
+# ---------- Quiz question management (teacher) ----------
+
+def test_question_management_lifecycle(teacher, student):
+    th, sh = _auth(teacher["token"]), _auth(student["token"])
+    sid = client.post(f"{API}/subjects", headers=th,
+                      json={"name": f"QM Subject {uuid.uuid4().hex[:6]}"}).json()["id"]
+    try:
+        tid = client.post(f"{API}/topics", headers=th,
+                          json={"subject_id": sid, "name": "QM Topic"}).json()["id"]
+        body = {"topic_id": tid, "question_text": "Which keyword filters rows in SQL?",
+                "options": ["WHERE", "ORDER", "GROUP", "LIMIT"], "correct_answer": 0,
+                "explanation": "WHERE filters rows.", "difficulty": "easy"}
+
+        # students cannot add, list (answers visible) or delete
+        assert client.post(f"{API}/quiz/questions", headers=sh, json=body).status_code == 403
+        assert client.get(f"{API}/quiz/questions", headers=sh).status_code == 403
+
+        # invalid payloads are rejected
+        bad = dict(body, options=["only one"])
+        assert client.post(f"{API}/quiz/questions", headers=th, json=bad).status_code == 422
+
+        created = client.post(f"{API}/quiz/questions", headers=th, json=body)
+        assert created.status_code == 201
+        qid = created.json()["id"]
+
+        listed = client.get(f"{API}/quiz/questions", headers=th, params={"topic_id": tid})
+        assert [q["id"] for q in listed.json()] == [qid]
+
+        # the student quiz must NOT leak the correct answer
+        quiz = client.get(f"{API}/quiz/topic/{tid}", headers=sh)
+        assert quiz.status_code == 200
+        assert "correct_answer" not in quiz.text
+
+        assert client.delete(f"{API}/quiz/questions/{qid}", headers=sh).status_code == 403
+        assert client.delete(f"{API}/quiz/questions/{qid}", headers=th).status_code == 200
+        assert client.delete(f"{API}/quiz/questions/{qid}", headers=th).status_code == 404
+    finally:
+        client.delete(f"{API}/subjects/{sid}", headers=th)

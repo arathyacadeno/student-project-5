@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
-
+import TeacherManagement from "./pages/TeacherManagement";
 import Login from "./Login";
 import Register from "./Register";
 import Layout from "./components/Layout";
@@ -204,6 +204,18 @@ function App() {
         />
 
         {/* Catch-all fallback */}
+        <Route
+          path="/teacher/manage"
+          element={
+            user && user.role === "teacher" ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <TeacherManagement />
+              </Layout>
+            ) : (
+              <Navigate to={user ? "/dashboard" : "/login"} replace />
+            )
+          }
+        />
         <Route
           path="*"
           element={<Navigate to={user ? "/dashboard" : "/login"} replace />}

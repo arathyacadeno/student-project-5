@@ -13,6 +13,7 @@ function BottomNav({ user }) {
 
   if (isTeacher) {
     navItems[4] = { to: "/teacher", label: "Teacher", icon: "👨‍🏫" };
+    navItems[3] = { to: "/teacher/manage", label: "Manage", icon: "🛠️" };
   }
 
   return (

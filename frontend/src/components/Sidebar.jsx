@@ -17,6 +17,7 @@ function Sidebar({ user }) {
 
   if (isTeacher) {
     navItems.push({ to: "/teacher", label: "Teacher Dashboard", icon: "👨‍🏫" });
+    navItems.push({ to: "/teacher/manage", label: "Manage Content", icon: "🛠️" });
   }
 
   return (

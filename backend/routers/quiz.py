@@ -410,3 +410,19 @@ def predict_topic_strength_api(req: MLPredictRequest):
         attempt_number=req.attempt_number or 1,
         historical_accuracy=req.historical_accuracy,
     )
+
+@router.delete("/quiz/questions/{question_id}")
+def delete_quiz_question(
+    question_id: int,
+    current_user: Student = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """
+    Teacher Only: Delete a quiz question (students' stored answers to it are removed too).
+    """
+    question = db.query(Question).filter(Question.id == question_id).first()
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found.")
+    db.delete(question)
+    db.commit()
+    return {"message": "Question deleted successfully."}
