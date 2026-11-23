@@ -120,24 +120,21 @@
 .flint-logo-link {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   text-decoration: none;
   cursor: pointer;
 }
 
-.flint-logo-icon-box {
-  width: 34px;
-  height: 34px;
-  background-color: var(--flint-primary);
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
+.flint-nav-logo-img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
 }
 
 .flint-brand-text {
-  font-size: 21px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--flint-primary);
   letter-spacing: 0.6px;

@@ -49,14 +49,7 @@ function Home({ user, onLogout }) {
         <div className="flint-header-container">
           {/* Brand Logo */}
           <a href="#home" className="flint-logo-link" onClick={(e) => handleNavClick(e, "home")}>
-            <div className="flint-logo-icon-box">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"
-                  fill="white"
-                />
-              </svg>
-            </div>
+            <img className="flint-nav-logo-img" src="/flint-logo.jpeg" alt="FLINT Logo" />
             <span className="flint-brand-text">FLINT</span>
           </a>
 
@@ -215,22 +208,6 @@ function Home({ user, onLogout }) {
                   alt="Scholars collaborating with laptops and tablets"
                   className="flint-hero-photo"
                 />
-                <div className="flint-photo-overlay-bar">
-                  <div className="flint-overlay-left">
-                    <div className="flint-overlay-icon">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                        <rect width="18" height="18" x="3" y="3" rx="2" />
-                        <path d="m9 8 3 3-3 3" />
-                        <line x1="14" x2="16" y1="14" y2="14" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="flint-overlay-title">Module 4: React Patterns</div>
-                      <div className="flint-overlay-sub">Live collaborative sandbox</div>
-                    </div>
-                  </div>
-                  <div className="flint-overlay-pill-progress"></div>
-                </div>
               </div>
 
               {/* Bottom Dual Stats */}
@@ -848,43 +825,6 @@ function Home({ user, onLogout }) {
       </section>
 
       {/* =========================================================================
-          7. WHAT LEARNERS SAY (TESTIMONIALS) SECTION
-          ========================================================================= */}
-      <section className="flint-section flint-testimonials-section">
-        <div className="flint-container">
-          <div className="flint-section-header-center">
-            <h2 className="flint-section-heading">What Learners Say</h2>
-            <p className="flint-section-subhead">
-              Real feedback from our growing global learning community.
-            </p>
-          </div>
-
-          <div className="flint-testimonial-card-wrap">
-            <div className="flint-testimonial-card">
-              <div className="flint-testimonial-badge-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-              </div>
-              <p className="flint-testimonial-quote">
-                “FLINT transformed how I prepare and retain complex technical subjects.
-                The clear modular roadmaps, contextual drills, and adaptive analytics
-                eliminated ambiguity and accelerated my academic mastery ten-fold.”
-              </p>
-              <div className="flint-testimonial-author">
-                <div className="flint-author-info">
-                  <div className="author-name">Alan S.</div>
-                  <div className="author-role">Medical Sciences & Computer Engineering Scholar</div>
-                </div>
-                <div className="flint-author-rating">★★★★★ <span>5.0 Rating</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
           8. CALL TO ACTION BANNER
           ========================================================================= */}
       <section className="flint-cta-section">
@@ -937,17 +877,10 @@ function Home({ user, onLogout }) {
           <div className="flint-footer-top-grid">
             {/* Column 1: Brand & Mission */}
             <div className="flint-footer-col brand-col">
-              <div className="flint-logo-link">
-                <div className="flint-logo-icon-box">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"
-                      fill="white"
-                    />
-                  </svg>
-                </div>
+              <a href="#home" className="flint-logo-link" onClick={(e) => handleNavClick(e, "home")}>
+                <img className="flint-nav-logo-img" src="/flint-logo.jpeg" alt="FLINT Logo" />
                 <span className="flint-brand-text">FLINT</span>
-              </div>
+              </a>
               <p className="flint-footer-mission">
                 Empowering curious minds through an academic yet luminous learning
                 ecosystem designed for modern mastery and intuitive scholarly exploration.
