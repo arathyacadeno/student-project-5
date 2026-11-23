@@ -5,40 +5,27 @@ scholarships, study abroad, checklist, deadlines, questionnaire,
 counselling requests.
 """
 import os
-<<<<<<< HEAD
 import re
 from typing import List, Optional, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-=======
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 import datetime
 
 from database import get_db
 from auth import get_current_user, require_teacher
-<<<<<<< HEAD
 from medical_guidance import ensure_medical_pg_courses
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 from models import (
     Student, StudentProfile, SkillProfile, InterestProfile,
     RoadmapItem, EntranceExam, College, Course, Scholarship,
     StudyAbroadInfo, ApplicationChecklistItem, DeadlineReminder,
     QuestionnaireQuestion, StudentQuestionnaireAnswer, CounsellingRequest,
-<<<<<<< HEAD
     GuidanceCourse, GuidanceActivity
-=======
-    GuidanceCourse
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 )
 
 router = APIRouter()
 
-<<<<<<< HEAD
 class CounsellingRequestCreate(BaseModel):
     request_type: Literal["higher_studies", "study_support"] = "higher_studies"
     message: str = Field(..., min_length=1)
@@ -49,8 +36,6 @@ class GuidanceActivityCreate(BaseModel):
     activity_type: Literal["course", "exam"]
     entity_id: int = Field(..., ge=1)
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 # ─────────────────────────────────────────────
 # ROADMAP
@@ -248,7 +233,6 @@ def _course_dict(c: Course, match_score: float = None, match_reason: str = None)
     return d
 
 
-<<<<<<< HEAD
 def _diploma_branch(profile: Optional[StudentProfile]) -> Optional[str]:
     if not profile:
         return None
@@ -362,8 +346,6 @@ def _filter_courses_for_bachelor(
     ]
 
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 @router.get("/courses/recommend")
 def recommend_courses(
     db: Session = Depends(get_db),
@@ -377,7 +359,6 @@ def recommend_courses(
       3. InterestProfile tags (from original questionnaire)
     Returns top-10 courses with match_score and match_reason.
     """
-<<<<<<< HEAD
     # Ensure health sciences & medical postgraduate courses exist in DB
     ensure_medical_pg_courses(db)
 
@@ -385,8 +366,6 @@ def recommend_courses(
         StudentProfile.student_id == current_user.id
     ).first()
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     # Build skill-based stream weights
     skills = db.query(SkillProfile).filter(SkillProfile.student_id == current_user.id).all()
     skill_weights: dict[str, float] = {}
@@ -433,7 +412,6 @@ def recommend_courses(
     for s in all_streams:
         combined[s] = 0.6 * skill_weights.get(s, 0) + 0.4 * qa_weights.get(s, 0)
 
-<<<<<<< HEAD
     courses = _filter_courses_for_diploma(db.query(Course).all(), profile)
     diploma_branch = _diploma_branch(profile)
     current_bachelor_stream = _current_bachelor_stream(profile) if not diploma_branch else None
@@ -459,20 +437,10 @@ def recommend_courses(
         return [_course_dict(c, 50.0, reason) for c in courses]
 
     # Score every course
-=======
-    # Fallback: if no data, return all courses with equal weight
-    if not combined:
-        courses = db.query(Course).limit(10).all()
-        return [_course_dict(c, 50.0, "Explore all career options") for c in courses]
-
-    # Score every course
-    courses = db.query(Course).all()
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     scored = []
     max_score = max(combined.values()) if combined else 1
     for course in courses:
         raw = combined.get(course.stream, 0)
-<<<<<<< HEAD
         if current_bachelor_stream:
             degree_fit = _bachelor_eligibility_fit(course, current_bachelor_stream)
             is_direct_stream = (course.stream.casefold() == current_bachelor_stream.casefold())
@@ -482,9 +450,6 @@ def recommend_courses(
         else:
             score_ceiling = max(max_score, 0.01)
         pct = min(100.0, round((raw / score_ceiling) * 100.0, 1))
-=======
-        pct = min(100.0, (raw / max(max_score, 0.01)) * 100.0)
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
         # Build reason string
         strong_subjects = [
@@ -494,7 +459,6 @@ def recommend_courses(
                 for subj in subject_map.get(course.stream.lower().replace(" ", "_"), [])
             )
         ]
-<<<<<<< HEAD
         if current_bachelor_stream:
             current_course = profile.course.strip() if profile and profile.course else "bachelor's"
             is_direct_stream = (course.stream.casefold() == current_bachelor_stream.casefold())
@@ -505,9 +469,6 @@ def recommend_courses(
             else:
                 reason = f"Eligible postgraduate option after your current {current_course} studies; verify admission eligibility."
         elif strong_subjects:
-=======
-        if strong_subjects:
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             reason = f"Strong in {', '.join(strong_subjects[:2])}"
         elif pct > 60:
             reason = f"Matches your interests and skills in {course.stream}"
@@ -516,11 +477,8 @@ def recommend_courses(
         else:
             reason = "Broad career option worth exploring"
 
-<<<<<<< HEAD
         if diploma_branch:
             reason = "Possible lateral-entry pathway; verify the current admission rules and branch eligibility."
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         scored.append((pct, course, reason))
 
     scored.sort(key=lambda x: x[0], reverse=True)
@@ -830,7 +788,6 @@ def dismiss_reminder(
     return {"message": "Dismissed"}
 
 
-<<<<<<< HEAD
 @router.post("/activity", status_code=status.HTTP_201_CREATED)
 def track_guidance_activity(
     payload: GuidanceActivityCreate,
@@ -879,8 +836,6 @@ def list_guidance_activity(
     ]
 
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 # ─────────────────────────────────────────────
 # INTEREST QUESTIONNAIRE
 # ─────────────────────────────────────────────
@@ -939,17 +894,12 @@ def submit_questionnaire(
 
 @router.post("/counselling", status_code=status.HTTP_201_CREATED)
 def create_counselling_request(
-<<<<<<< HEAD
     payload: CounsellingRequestCreate,
-=======
-    payload: dict,
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     db: Session = Depends(get_db),
     current_user: Student = Depends(get_current_user)
 ):
     if current_user.role != "student":
         raise HTTPException(status_code=403, detail="Only students can submit counselling requests")
-<<<<<<< HEAD
     message = payload.message.strip()
     if not message:
         raise HTTPException(status_code=422, detail="A request message is required.")
@@ -968,12 +918,6 @@ def create_counselling_request(
         request_type=payload.request_type,
         message=message,
         preferred_mode=payload.preferred_mode,
-=======
-    req = CounsellingRequest(
-        student_id=current_user.id,
-        message=payload.get("message", ""),
-        preferred_mode=payload.get("preferred_mode", "Online"),
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     )
     db.add(req)
     db.commit()
@@ -1003,10 +947,7 @@ def get_counselling_requests(
             "id": r.id,
             "student_id": r.student_id,
             "student_name": r.student.name if r.student else None,
-<<<<<<< HEAD
             "request_type": r.request_type,
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             "message": r.message,
             "preferred_mode": r.preferred_mode,
             "status": r.status,

@@ -797,10 +797,6 @@ Verify visa requirements and fee structures on official university/embassy websi
     # Import here to avoid circular issues
     import sys, os
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-<<<<<<< HEAD
-=======
-    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'routers'))
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     try:
         from routers.chatbot import _embed_document
         for doc in docs:
@@ -853,7 +849,6 @@ else:
     print(f"  ✔ {len(papers)} question papers seeded")
 
 
-<<<<<<< HEAD
 # Diploma-to-degree pathway data is maintained outside the main seed guard so
 # existing installations receive it when this script is rerun.
 diploma_pathways = [
@@ -947,8 +942,6 @@ ensure_medical_pg_courses(db)
 print("  ✔ Medical and Health Sciences postgraduate pathways verified/seeded.")
 
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 db.close()
 print("\n✅ Phase 1 seed complete!")
 print("\nTest accounts:")

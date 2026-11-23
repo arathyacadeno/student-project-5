@@ -1,7 +1,6 @@
 import os
 import json
 import datetime
-<<<<<<< HEAD
 import logging
 import requests
 from typing import List, Optional, Dict, Any, Literal
@@ -16,36 +15,18 @@ from auth import get_current_user, require_teacher
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-=======
-import requests
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-
-from database import get_db
-from models import Student, SkillProfile
-from auth import get_current_user
-
-router = APIRouter()
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 
 class RevisionNotesRequest(BaseModel):
-<<<<<<< HEAD
     topic_name: str = Field(..., min_length=1, max_length=100)
     subject_name: str = Field(default="General", min_length=1, max_length=100)
 
 
 class RevisionReviewRequest(BaseModel):
     decision: Literal["approve", "reject"]
-=======
-    topic_name: str
-    subject_name: Optional[str] = "General"
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 class PracticeQuestionItem(BaseModel):
@@ -56,7 +37,6 @@ class PracticeQuestionItem(BaseModel):
 
 
 class RevisionNotesResponse(BaseModel):
-<<<<<<< HEAD
     id: int
     topic_name: str
     subject_name: str
@@ -69,16 +49,6 @@ class RevisionNotesResponse(BaseModel):
     practice_questions: List[Dict[str, Any]] = []
     message: Optional[str] = None
     created_at: str
-=======
-    topic_name: str
-    subject_name: str
-    overview: str
-    key_concepts: List[str]
-    practical_example: str
-    common_pitfalls: List[str]
-    practice_questions: List[Dict[str, Any]]
-    generated_at: str
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 def _generate_ai_revision_content(topic_name: str, subject_name: str) -> Dict[str, Any]:
@@ -96,10 +66,7 @@ Generate a concise, pedagogical revision note in valid JSON format with these ex
     "Core concept 3"
   ],
   "practical_example": "A clear step-by-step example with code or calculation showing how to solve a problem in this topic.",
-<<<<<<< HEAD
   "teaching_outline": "A short, simple explanation outline for a student teaching this topic to a classmate.",
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   "common_pitfalls": [
     "Common mistake students make and how to avoid it",
     "Second common misconception"
@@ -158,7 +125,6 @@ Return ONLY valid JSON. Do not wrap in markdown quotes if possible."""
                     clean_json = clean_json[:-3]
                 parsed = json.loads(clean_json.strip())
                 return parsed
-<<<<<<< HEAD
         except (
             requests.RequestException,
             KeyError,
@@ -167,9 +133,6 @@ Return ONLY valid JSON. Do not wrap in markdown quotes if possible."""
             json.JSONDecodeError,
         ) as exc:
             logger.warning("Revision note generation failed with %s: %s", model, exc)
-=======
-        except Exception:
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             continue
 
     return _fallback_revision(topic_name, subject_name)
@@ -184,13 +147,10 @@ def _fallback_revision(topic_name: str, subject_name: str) -> Dict[str, Any]:
             "Verify edge cases and constraints before arriving at final answers."
         ],
         "practical_example": f"Review standard textbook exercises for {topic_name}. Practice step-by-step substitution and verify with known solutions.",
-<<<<<<< HEAD
         "teaching_outline": (
             f"Start by defining {topic_name}, explain one core rule, work through a simple example, "
             "then ask your classmate to solve a similar question aloud."
         ),
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         "common_pitfalls": [
             "Skipping foundational prerequisite concepts before tackling advanced formulas.",
             "Rushing through boundary condition checks."
@@ -216,7 +176,6 @@ def generate_revision_notes(
     Module 10: AI Revision Notes Generator.
     Produces simple explanations, important concepts, examples, and practice questions for a weak topic.
     """
-<<<<<<< HEAD
     topic_name = req.topic_name.strip()
     subject_name = req.subject_name.strip()
     existing = db.query(RevisionNote).filter(
@@ -315,17 +274,3 @@ def review_revision_note(
     note.reviewed_at = datetime.datetime.utcnow()
     db.commit()
     return {"id": note.id, "status": note.status}
-=======
-    ai_content = _generate_ai_revision_content(req.topic_name, req.subject_name)
-
-    return RevisionNotesResponse(
-        topic_name=req.topic_name,
-        subject_name=req.subject_name,
-        overview=ai_content.get("overview", ""),
-        key_concepts=ai_content.get("key_concepts", []),
-        practical_example=ai_content.get("practical_example", ""),
-        common_pitfalls=ai_content.get("common_pitfalls", []),
-        practice_questions=ai_content.get("practice_questions", []),
-        generated_at=datetime.datetime.utcnow().isoformat(),
-    )
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366

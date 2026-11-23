@@ -25,24 +25,16 @@ function CourseSummaries({ user }) {
   });
   const [savingEdit, setSavingEdit] = useState(false);
 
-<<<<<<< HEAD
   const summarySubjects = [...new Set(summaries.map((summary) => summary.subject).filter(Boolean))];
   const visibleSummaries = selectedSubject === "All"
     ? summaries
     : summaries.filter((summary) => summary.subject === selectedSubject);
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   const fetchSummaries = async () => {
     setLoading(true);
     setError(null);
     try {
-<<<<<<< HEAD
       const res = await api.get("/summaries");
-=======
-      const params = selectedSubject !== "All" ? { subject: selectedSubject } : {};
-      const res = await api.get("/summaries", { params });
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       setSummaries(res.data);
     } catch (err) {
       console.error(err);
@@ -54,11 +46,7 @@ function CourseSummaries({ user }) {
 
   useEffect(() => {
     fetchSummaries();
-<<<<<<< HEAD
   }, []);
-=======
-  }, [selectedSubject]);
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   const handleOpenReviseModal = (sum) => {
     setActiveSummary(sum);
@@ -119,11 +107,7 @@ function CourseSummaries({ user }) {
     }
   };
 
-<<<<<<< HEAD
   const isTeacher = ["teacher", "admin"].includes(user?.role);
-=======
-  const isTeacher = user?.role === "teacher";
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   return (
     <div className="course-summaries-page">
@@ -132,22 +116,14 @@ function CourseSummaries({ user }) {
         <div>
           <h2>📖 Course Summaries & High-Yield Quick Revision</h2>
           <p className="page-subtitle">
-<<<<<<< HEAD
             Revision summaries and quick quizzes matched to your current course and semester.
-=======
-            Synthesized core points for Biology, Mathematics, Computer Science, and rapid retention quizzes.
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           </p>
         </div>
       </div>
 
       {/* Subject Tabs */}
       <div className="subject-tabs-bar">
-<<<<<<< HEAD
         {["All", ...summarySubjects].map((subj) => (
-=======
-        {["All", "Biology", "Mathematics", "Computer Science"].map((subj) => (
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           <button
             key={subj}
             className={`subj-tab ${selectedSubject === subj ? "active" : ""}`}
@@ -162,7 +138,6 @@ function CourseSummaries({ user }) {
         <LoadingSpinner message="Loading course summaries..." />
       ) : error ? (
         <ErrorMessage error={error} onRetry={fetchSummaries} />
-<<<<<<< HEAD
       ) : visibleSummaries.length === 0 ? (
         <EmptyState
           icon="📚"
@@ -172,27 +147,13 @@ function CourseSummaries({ user }) {
       ) : (
         <div className="summaries-grid">
           {visibleSummaries.map((sum) => (
-=======
-      ) : summaries.length === 0 ? (
-        <EmptyState
-          icon="📚"
-          title="No summaries found"
-          message="Course summaries will appear here as teachers add them."
-        />
-      ) : (
-        <div className="summaries-grid">
-          {summaries.map((sum) => (
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             <div key={sum.id} className="summary-card">
               <div className="summary-card-top">
                 <span className="summary-subj-badge">{sum.subject}</span>
                 <span className="summary-topic-badge">📌 {sum.topic}</span>
-<<<<<<< HEAD
                 {sum.academic_year && (
                   <span className="summary-topic-badge">{sum.academic_year}</span>
                 )}
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               </div>
 
               <h3 className="summary-title">{sum.title}</h3>

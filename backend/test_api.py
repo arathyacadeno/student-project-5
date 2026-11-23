@@ -111,11 +111,7 @@ def run_tests():
         print(f"✓ Test 7b: Mock Test Scored & Skill Profile Auto-Updated (Score: {sub_res.score}/{sub_res.total_marks})")
 
         # 8. Feature 5: Course Summaries & Rapid Revision
-<<<<<<< HEAD
         summaries = list_course_summaries(subject=None, current_user=teacher_user, db=db)
-=======
-        summaries = list_course_summaries(subject=None, db=db)
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         assert len(summaries) >= 3
         first_sum = summaries[0]
         quiz_res = submit_summary_quiz(
@@ -124,11 +120,7 @@ def run_tests():
                 summary_id=first_sum.id,
                 answers=[QuickQuizAnswer(question_index=0, selected_option=1), QuickQuizAnswer(question_index=1, selected_option=2)]
             ),
-<<<<<<< HEAD
             current_user=teacher_user,
-=======
-            current_user=student_user,
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             db=db
         )
         assert quiz_res.total > 0

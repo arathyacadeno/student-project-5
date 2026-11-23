@@ -12,7 +12,6 @@ RAG pipeline:
 Fallback: if Gemini API call fails, a helpful static response is returned.
 """
 import os
-<<<<<<< HEAD
 import math
 import datetime
 import re
@@ -20,33 +19,18 @@ import logging
 import requests
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-=======
-import json
-import math
-import datetime
-import requests
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 from sqlalchemy.orm import Session
 
 from database import get_db
 from auth import get_current_user, require_teacher
 from models import (
     Student, SkillProfile, ChatSession, ChatMessage,
-<<<<<<< HEAD
     GuidanceDocument, DocumentEmbedding, QuestionPaper, Test,
     StudyGroup, GroupMember
 )
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-=======
-    GuidanceDocument, DocumentEmbedding
-)
-
-router = APIRouter()
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
@@ -163,21 +147,12 @@ def _retrieve_chunks(query: str, db: Session, top_k: int = 5) -> List[dict]:
     return results
 
 
-<<<<<<< HEAD
 def _call_gemini(prompt: str, fallback_response: Optional[str] = None) -> str:
     """Call Google Gemini API using current models with intelligent fallback."""
     api_key = os.getenv("GEMINI_API_KEY", GEMINI_API_KEY)
     if not api_key:
         return fallback_response or (
             "Hello! I am your FLINT Assistant. AI live generation is currently "
-=======
-def _call_gemini(prompt: str) -> str:
-    """Call Google Gemini API using current models with intelligent fallback."""
-    api_key = os.getenv("GEMINI_API_KEY", GEMINI_API_KEY)
-    if not api_key:
-        return (
-            "Hello! I am your StudyMatch Assistant. AI live generation is currently "
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             "running in offline guidance mode because an API key is not configured. "
             "Please explore the verified course roadmaps, exams, and scholarship modules above!"
         )
@@ -195,10 +170,6 @@ def _call_gemini(prompt: str) -> str:
         "gemini-3.5-flash",
     ]
 
-<<<<<<< HEAD
-=======
-    last_error = None
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     for model in models_to_try:
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
@@ -210,7 +181,6 @@ def _call_gemini(prompt: str) -> str:
                     parts = candidates[0].get("content", {}).get("parts", [])
                     return "".join(p.get("text", "") for p in parts)
             else:
-<<<<<<< HEAD
                 logger.warning("Chatbot request to %s returned status %s", model, resp.status_code)
         except (requests.RequestException, ValueError, KeyError, TypeError) as exc:
             logger.warning("Chatbot request failed with %s: %s", model, exc)
@@ -218,15 +188,6 @@ def _call_gemini(prompt: str) -> str:
 
     # Clean, helpful user-facing response if all live model requests encounter issues
     return fallback_response or (
-=======
-                last_error = f"Model {model} returned status {resp.status_code}"
-        except Exception as exc:
-            last_error = str(exc)
-            continue
-
-    # Clean, helpful user-facing response if all live model requests encounter issues
-    return (
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         "Hello! I am here to help you navigate courses, entrance exams, and your personalized study plan. "
         "I was unable to establish a live connection to the AI generation service right now. "
         "You can check our verified guidance documents, exam guides, and mock tests in the meantime, or try asking again in a moment!"
@@ -239,11 +200,8 @@ def _build_prompt(
     skill_profile: List,
     student_name: str,
     history: List,
-<<<<<<< HEAD
     resources: List[Dict[str, Any]],
     group_context: Optional[str],
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 ) -> str:
     """Build the full RAG prompt for Gemini."""
     # Recent history (last 6 messages)
@@ -271,7 +229,6 @@ def _build_prompt(
     else:
         retrieved_text = "\n(No specific guidance documents found for this query — answer from general knowledge.)\n"
 
-<<<<<<< HEAD
     resources_text = "\n".join(
         f"- {item['kind']}: {item['title']} ({item['subject']}, {item.get('year') or item.get('exam_name') or 'available'}); "
         f"topics: {', '.join(item.get('topic_tags', [])) or 'not tagged'}; link: {item['link']}"
@@ -279,9 +236,6 @@ def _build_prompt(
     ) or "No matching approved tests or papers were found."
 
     prompt = f"""You are FLINT Assistant, a friendly and knowledgeable academic mentor for Indian students.
-=======
-    prompt = f"""You are StudyMatch Assistant, a friendly and knowledgeable academic mentor for Indian students.
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 You help students with higher education guidance, course/exam queries, study tips, and understanding their own skill profile.
 
 STUDENT: {student_name}
@@ -290,15 +244,12 @@ SKILL PROFILE:
 
 {retrieved_text}
 
-<<<<<<< HEAD
 ACTIVE STUDY GROUP:
 {group_context or 'No active study group assigned.'}
 
 APPROVED STUDY RESOURCES:
 {resources_text}
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 CONVERSATION HISTORY:
 {history_text}
 
@@ -309,17 +260,13 @@ Instructions:
 - If the retrieved content is relevant, use it and cite the document title.
 - If nothing relevant was found, say so and answer from general knowledge.
 - If asked about weak topics, give specific, actionable study advice.
-<<<<<<< HEAD
 - If asked to find question papers or mock tests, recommend only matching resources from the approved list above.
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 - Never fabricate specific dates, fees or college rankings — advise verification.
 - Respond in the same language as the student's question.
 """
     return prompt
 
 
-<<<<<<< HEAD
 def _find_study_resources(user_message: str, db: Session) -> List[Dict[str, Any]]:
     query = user_message.casefold()
     if not any(term in query for term in ("paper", "question", "mock test", "practice test", "test")):
@@ -439,8 +386,6 @@ def _offline_chat_response(resources: List[Dict[str, Any]], group_context: Optio
     )
 
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 # ─────────────────────────────────────────────
 # GUIDANCE DOCUMENT MANAGEMENT (Teacher)
 # ─────────────────────────────────────────────
@@ -453,11 +398,7 @@ def upload_document(
 ):
     """
     Teacher uploads a guidance document for RAG.
-<<<<<<< HEAD
     payload: { title, doc_type, content }
-=======
-    payload: { title, doc_type, content, is_approved (optional) }
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     """
     doc = GuidanceDocument(
         title=payload.get("title", "Guidance Document"),
@@ -465,11 +406,7 @@ def upload_document(
         content=payload.get("content", ""),
         file_path=payload.get("file_path"),
         uploaded_by=current_user.id,
-<<<<<<< HEAD
         is_approved=False,
-=======
-        is_approved=payload.get("is_approved", True),
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     )
     db.add(doc)
     db.flush()
@@ -662,11 +599,8 @@ def send_message(
 
     # RAG: retrieve relevant chunks
     context_chunks = _retrieve_chunks(user_text, db, top_k=5)
-<<<<<<< HEAD
     resources = _find_study_resources(user_text, db)
     group_context = _get_active_group_context(current_user.id, db)
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     # Build prompt and call Gemini
     prompt = _build_prompt(
@@ -675,7 +609,6 @@ def send_message(
         skill_profile=skills,
         student_name=current_user.name,
         history=history[:-1],  # Exclude the message we just added
-<<<<<<< HEAD
         resources=resources,
         group_context=group_context,
     )
@@ -692,12 +625,6 @@ def send_message(
         }
         for resource in resources
     ]
-=======
-    )
-    ai_response = _call_gemini(prompt)
-    full_response = ai_response + DISCLAIMER
-
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     # Save bot message
     bot_msg = ChatMessage(
         session_id=session_id,
@@ -705,14 +632,9 @@ def send_message(
         message=full_response,
         context_data={
             "weak_topics": [s.topic for s in skills if s.status == "weak"][:5],
-<<<<<<< HEAD
             "group_context": group_context,
         },
         sources=source_entries or None,
-=======
-        },
-        sources=context_chunks[:3] if context_chunks else None,
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     )
     db.add(bot_msg)
 
@@ -726,12 +648,8 @@ def send_message(
         "session_id": session_id,
         "student_message_id": student_msg.id,
         "bot_response": full_response,
-<<<<<<< HEAD
         "sources": source_entries,
         "recommended_resources": resources,
-=======
-        "sources": context_chunks[:3] if context_chunks else [],
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         "suggested_questions": _suggest_questions(skills, user_text),
     }
 

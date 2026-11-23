@@ -4,10 +4,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-<<<<<<< HEAD
 backend/uploads/
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 dist/
 node_modules/
 .vscode/

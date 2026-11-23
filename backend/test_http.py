@@ -9,11 +9,7 @@ from fastapi.testclient import TestClient
 
 from main import app
 from database import SessionLocal
-<<<<<<< HEAD
 from models import ClassEnrollment, Course, Student, StudentProfile, TeacherProfile, StudyClass
-=======
-from models import Student, StudentProfile, TeacherProfile
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 from auth import get_password_hash
 
 API = "/api/v1"
@@ -79,7 +75,6 @@ def teacher():
     _delete_user(email)
 
 
-<<<<<<< HEAD
 @pytest.fixture
 def admin():
     email = _email("admin")
@@ -95,8 +90,6 @@ def admin():
     _delete_user(email)
 
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 # ---------- Registration ----------
 
 def test_register_returns_201_and_token(student):
@@ -119,7 +112,6 @@ def test_register_missing_fields_returns_422():
     assert client.post(f"{API}/auth/register", json={"email": _email("x")}).status_code == 422
 
 
-<<<<<<< HEAD
 def test_legacy_register_saves_selected_course():
     email = _email("course")
     try:
@@ -565,17 +557,6 @@ def test_teacher_signup_requires_admin_approval(admin):
         })
         assert approved_login.status_code == 200
         assert approved_login.json()["user"]["role"] == "teacher"
-=======
-def test_register_cannot_create_teacher():
-    """SECURITY: public sign-up must never grant the teacher role."""
-    email = _email("sneaky")
-    try:
-        res = client.post(f"{API}/auth/register", json={
-            "name": "Sneaky", "email": email, "password": PASSWORD, "role": "teacher"})
-        assert res.status_code in (201, 400, 403)
-        if res.status_code == 201:
-            assert res.json()["user"]["role"] == "student"
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     finally:
         _delete_user(email)
 
@@ -646,7 +627,6 @@ def test_student_cannot_create_subject(student):
     assert res.status_code == 403
 
 
-<<<<<<< HEAD
 def test_teacher_syllabus_subjects_are_filterable_by_course(teacher):
     subject_name = f"Scoped Subject {uuid.uuid4().hex[:6]}"
     payload = {
@@ -680,8 +660,6 @@ def test_teacher_syllabus_subjects_are_filterable_by_course(teacher):
         ).status_code == 200
 
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 def test_teacher_subject_and_topic_lifecycle(teacher, student):
     th = _auth(teacher["token"])
     name = f"HTTP Subject {uuid.uuid4().hex[:6]}"
@@ -721,7 +699,6 @@ def test_create_topic_invalid_body_returns_422(teacher):
     assert res.status_code == 422
 
 
-<<<<<<< HEAD
 def test_legacy_teacher_signup_is_pending_until_approval():
     email = _email("legacy_teacher")
     try:
@@ -738,17 +715,6 @@ def test_legacy_teacher_signup_is_pending_until_approval():
         assert res.json()["approval_status"] == "pending"
         login = client.post("/login", json={"email": email, "password": PASSWORD})
         assert login.status_code == 403
-=======
-def test_legacy_register_cannot_create_teacher():
-    """SECURITY: the /register route used by the React app must also force student."""
-    email = _email("legacy")
-    try:
-        res = client.post("/register", json={
-            "name": "Legacy Sneaky", "email": email,
-            "password": PASSWORD, "role": "teacher"})
-        assert res.status_code == 200, res.text
-        assert res.json()["role"] == "student"
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     finally:
         _delete_user(email)
 

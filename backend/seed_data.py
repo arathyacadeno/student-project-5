@@ -13,22 +13,13 @@ from auth import get_password_hash
 def seed():
     print("Starting database schema update and data seeding...")
     
-<<<<<<< HEAD
     Base.metadata.create_all(bind=engine)
     print("Tables created / verified successfully.")
 
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     # 1. Update schema
     with engine.connect() as conn:
         conn.execute(text("ALTER TABLE students ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'student';"))
         conn.commit()
-<<<<<<< HEAD
-=======
-    
-    Base.metadata.create_all(bind=engine)
-    print("Tables created / verified successfully.")
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     db = SessionLocal()
     try:
@@ -39,12 +30,8 @@ def seed():
                 name="Alex Morgan",
                 email="student@studymatch.ai",
                 password_hash=get_password_hash("password123"),
-<<<<<<< HEAD
                 role="student",
                 approval_status="approved",
-=======
-                role="student"
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             )
             db.add(student_user)
             db.commit()
@@ -52,10 +39,7 @@ def seed():
             print("Created student: student@studymatch.ai / password123")
         else:
             student_user.role = "student"
-<<<<<<< HEAD
             student_user.approval_status = "approved"
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             db.commit()
 
         teacher_user = db.query(Student).filter(Student.email == "teacher@studymatch.ai").first()
@@ -64,12 +48,8 @@ def seed():
                 name="Dr. Sarah Jenkins",
                 email="teacher@studymatch.ai",
                 password_hash=get_password_hash("password123"),
-<<<<<<< HEAD
                 role="teacher",
                 approval_status="approved",
-=======
-                role="teacher"
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             )
             db.add(teacher_user)
             db.commit()
@@ -77,10 +57,7 @@ def seed():
             print("Created teacher: teacher@studymatch.ai / password123")
         else:
             teacher_user.role = "teacher"
-<<<<<<< HEAD
             teacher_user.approval_status = "approved"
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             db.commit()
 
         # Seed profile

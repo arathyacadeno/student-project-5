@@ -38,29 +38,11 @@ function Login({ onLogin, onSwitchToRegister }) {
     }
   };
 
-<<<<<<< HEAD
   return (
     <div className="auth-card">
       <div className="auth-brand-head">
         <img className="auth-logo" src="/flint-logo.jpeg" alt="FLINT education logo" />
         <h1>FLINT</h1>
-=======
-  const fillQuickDemo = (role) => {
-    if (role === "student") {
-      setEmail("student@studymatch.ai");
-      setPassword("password123");
-    } else {
-      setEmail("teacher@studymatch.ai");
-      setPassword("password123");
-    }
-  };
-
-  return (
-    <div className="auth-card">
-      <div className="auth-brand-head">
-        <span className="auth-logo">🎓</span>
-        <h1>StudyMatch AI</h1>
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         <p className="auth-subtitle">Sign in to your learning dashboard</p>
       </div>
 
@@ -69,11 +51,7 @@ function Login({ onLogin, onSwitchToRegister }) {
           <label>Email Address</label>
           <input
             type="email"
-<<<<<<< HEAD
             placeholder="student@example.com"
-=======
-            placeholder="student@studymatch.ai"
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -98,21 +76,6 @@ function Login({ onLogin, onSwitchToRegister }) {
 
       {message && <div className="auth-error-msg">{message}</div>}
 
-<<<<<<< HEAD
-=======
-      <div className="demo-credentials-box">
-        <span>⚡ Quick Demo Logins:</span>
-        <div className="demo-btns-row">
-          <button type="button" onClick={() => fillQuickDemo("student")}>
-            Alex Morgan (Student)
-          </button>
-          <button type="button" onClick={() => fillQuickDemo("teacher")}>
-            Dr. Jenkins (Teacher)
-          </button>
-        </div>
-      </div>
-
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       <div className="auth-switch-footer">
         Don't have an account?{" "}
         <button type="button" className="link-button" onClick={onSwitchToRegister}>

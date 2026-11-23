@@ -95,15 +95,12 @@ function StudentDashboard({ user }) {
         average_score: summary.subject_breakdown[subj].average_score,
       }))
     : [];
-<<<<<<< HEAD
   const hasCompleteMaterialScope = Boolean(
     profile?.course?.trim() && profile?.college?.trim() && profile?.semester?.trim()
   );
   const materialScopeLabel = [profile?.course, profile?.college, profile?.semester]
     .filter(Boolean)
     .join(" · ");
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   return (
     <div className="dashboard-page">
@@ -117,11 +114,8 @@ function StudentDashboard({ user }) {
           </p>
           <div className="profile-meta-tags">
             {profile?.course && <span className="meta-tag">📘 {profile.course}</span>}
-<<<<<<< HEAD
             {profile?.college && <span className="meta-tag">🏫 {profile.college}</span>}
             {profile?.semester && <span className="meta-tag">📅 {profile.semester}</span>}
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             {profile?.stream && <span className="meta-tag">🔬 {profile.stream}</span>}
             {profile?.academic_level && (
               <span className="meta-tag">🎯 {profile.academic_level}</span>
@@ -141,7 +135,6 @@ function StudentDashboard({ user }) {
           >
             🤖 Chat with AI Mentor
           </button>
-<<<<<<< HEAD
           <button
             className="action-btn-secondary"
             onClick={() => navigate("/guidance")}
@@ -154,8 +147,6 @@ function StudentDashboard({ user }) {
           >
             📚 Study Materials for My Course
           </button>
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         </div>
       </section>
 
@@ -370,13 +361,8 @@ function StudentDashboard({ user }) {
             <div className="quick-action-item" onClick={() => navigate("/materials")}>
               <span className="qa-icon">📚</span>
               <div className="qa-text">
-<<<<<<< HEAD
                 <strong>Materials for My Enrolled Course</strong>
                 <span>Only resources matching your registered course, institution, and year/semester are shown; weak-topic notes are prioritized.</span>
-=======
-                <strong>Study Materials Priority Feed</strong>
-                <span>Weak topic notes are automatically pinned to the top of your feed.</span>
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               </div>
               <span className="qa-arrow">→</span>
             </div>
@@ -415,7 +401,6 @@ function StudentDashboard({ user }) {
       <section className="dashboard-materials-preview">
         <div className="section-head-row">
           <div>
-<<<<<<< HEAD
             <h3>Materials Matched to Your Course</h3>
             <span className="card-subtext">
               {hasCompleteMaterialScope
@@ -462,39 +447,6 @@ function StudentDashboard({ user }) {
               : "Add your course, institution, and year/semester to your profile to find matching materials."}
           </p>
         )}
-=======
-            <h3>Recommended Study Materials</h3>
-            <span className="card-subtext">Curated specifically from your weak and developing topics</span>
-          </div>
-          <button className="view-all-link" onClick={() => navigate("/materials")}>
-            View All Materials →
-          </button>
-        </div>
-
-        <div className="materials-preview-grid">
-          {materials.map((mat) => (
-            <div key={mat.id} className="preview-mat-card">
-              <div className="card-top-badges">
-                <span className="subject-badge">{mat.subject}</span>
-                {mat.is_weak_topic && (
-                  <span className="weak-priority-badge">⚠️ Weak Topic</span>
-                )}
-              </div>
-              <h4>{mat.title}</h4>
-              <p className="mat-summary-preview">{mat.summary}</p>
-              <div className="card-footer-action">
-                <span className="topic-tag">📌 {mat.topic}</span>
-                <button
-                  className="read-btn-sm"
-                  onClick={() => navigate(`/materials?search=${encodeURIComponent(mat.title)}`)}
-                >
-                  Read →
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       </section>
 
       {/* Modal: AI Revision Notes (Module 10) */}
@@ -514,15 +466,11 @@ function StudentDashboard({ user }) {
             <div className="modal-body-scrollable">
               {loadingRevision ? (
                 <LoadingSpinner message="Generating pedagogical revision notes with Gemini..." />
-<<<<<<< HEAD
               ) : revisionNotes?.status === "pending" ? (
                 <p className="scope-feedback" role="status">
                   {revisionNotes.message} Your teacher will review the notes before they appear here. Select AI Notes again after approval to view them.
                 </p>
               ) : revisionNotes?.status === "approved" ? (
-=======
-              ) : revisionNotes ? (
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 <div>
                   <div className="revision-overview-box" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "14px", borderRadius: "8px", marginBottom: "16px" }}>
                     <h4 style={{ color: "#166534", margin: "0 0 6px 0" }}>📖 Plain-Language Explanation</h4>
@@ -530,14 +478,11 @@ function StudentDashboard({ user }) {
                   </div>
 
                   <div className="revision-block" style={{ marginBottom: "16px" }}>
-<<<<<<< HEAD
                     <h4>🧑‍🏫 Teaching Outline</h4>
                     <p>{revisionNotes.teaching_outline}</p>
                   </div>
 
                   <div className="revision-block" style={{ marginBottom: "16px" }}>
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                     <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a", marginBottom: "8px" }}>🔑 Key Concepts & Rules:</h4>
                     <ul>
                       {revisionNotes.key_concepts.map((kc, i) => (
@@ -548,11 +493,7 @@ function StudentDashboard({ user }) {
 
                   <div className="revision-block" style={{ marginBottom: "16px" }}>
                     <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a", marginBottom: "8px" }}>🧪 Practical Example:</h4>
-<<<<<<< HEAD
                     <div style={{ background: "#075B68", color: "#EAF7F5", padding: "12px", borderRadius: "8px", fontFamily: "monospace", fontSize: "12.5px" }}>
-=======
-                    <div style={{ background: "#1e1b4b", color: "#e0e7ff", padding: "12px", borderRadius: "8px", fontFamily: "monospace", fontSize: "12.5px" }}>
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                       <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
                         {revisionNotes.practical_example}
                       </pre>

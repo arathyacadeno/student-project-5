@@ -13,7 +13,6 @@ function errorText(err, fallback) {
   return fallback;
 }
 
-<<<<<<< HEAD
 const EMPTY_SUBJECT = {
   name: "",
   code: "",
@@ -22,9 +21,6 @@ const EMPTY_SUBJECT = {
   curriculum: "",
   academic_year: "",
 };
-=======
-const EMPTY_SUBJECT = { name: "", code: "", description: "" };
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 const EMPTY_TOPIC = { name: "", order_index: 0, description: "" };
 const EMPTY_QUESTION = {
   question_text: "",
@@ -132,12 +128,9 @@ function TeacherManagement() {
         name: form.name.trim(),
         code: form.code?.trim() || null,
         description: form.description?.trim() || null,
-<<<<<<< HEAD
         course: form.course?.trim() || "",
         curriculum: form.curriculum?.trim() || "",
         academic_year: form.academic_year?.trim() || "",
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       };
       if (id) await api.put(`/api/v1/subjects/${id}`, body);
       else await api.post("/api/v1/subjects", body);
@@ -291,14 +284,10 @@ function TeacherManagement() {
       <div className="page-header-row">
         <div>
           <h2>🛠️ Content Management</h2>
-<<<<<<< HEAD
           <p className="page-subtitle">
             Manage teacher-curated syllabi and quiz questions. Match the course,
             board/institution, and year/semester to students' registration details.
           </p>
-=======
-          <p className="page-subtitle">Manage subjects, topics and quiz questions used by students.</p>
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         </div>
       </div>
 
@@ -335,29 +324,20 @@ function TeacherManagement() {
             <div className="class-topics-table-wrapper">
               <table className="teacher-table">
                 <thead>
-<<<<<<< HEAD
                   <tr><th>Subject</th><th>Course</th><th>Board / Institution</th><th>Year / Semester</th><th>Topics</th><th>Description</th><th>Actions</th></tr>
-=======
-                  <tr><th>Name</th><th>Code</th><th>Topics</th><th>Description</th><th>Actions</th></tr>
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 </thead>
                 <tbody>
                   {subjects.map((s) => (
                     <tr key={s.id}>
                       <td><strong>{s.name}</strong></td>
-<<<<<<< HEAD
                       <td>{s.course || "Not scoped"}{s.code ? ` (${s.code})` : ""}</td>
                       <td>{s.curriculum || "Not scoped"}</td>
                       <td>{s.academic_year || "Not scoped"}</td>
-=======
-                      <td>{s.code || "—"}</td>
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                       <td>{s.topic_count}</td>
                       <td>{s.description || "—"}</td>
                       <td style={{ whiteSpace: "nowrap" }}>
                         <button
                           className="action-btn-secondary btn-sm"
-<<<<<<< HEAD
                           onClick={() => setSubjectModal({ id: s.id, form: {
                             name: s.name,
                             code: s.code || "",
@@ -366,9 +346,6 @@ function TeacherManagement() {
                             curriculum: s.curriculum || "",
                             academic_year: s.academic_year || "",
                           } })}
-=======
-                          onClick={() => setSubjectModal({ id: s.id, form: { name: s.name, code: s.code || "", description: s.description || "" } })}
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                         >Edit</button>{" "}
                         <button className="action-btn-danger btn-sm" onClick={() => deleteSubject(s)}>Delete</button>
                       </td>
@@ -519,7 +496,6 @@ function TeacherManagement() {
                   onChange={(e) => setSubjectModal({ ...subjectModal, form: { ...subjectModal.form, code: e.target.value } })} />
               </div>
               <div className="form-group" style={{ marginBottom: "14px" }}>
-<<<<<<< HEAD
                 <label>Course / program (exact registration value) *</label>
                 <input className="search-input" style={{ width: "100%" }} value={subjectModal.form.course}
                   maxLength={100} required
@@ -542,8 +518,6 @@ function TeacherManagement() {
                 three fields match their registration.
               </p>
               <div className="form-group" style={{ marginBottom: "14px" }}>
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 <label>Description</label>
                 <textarea rows="3" className="search-input" style={{ width: "100%" }} value={subjectModal.form.description}
                   onChange={(e) => setSubjectModal({ ...subjectModal, form: { ...subjectModal.form, description: e.target.value } })} />

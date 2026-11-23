@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 function Navbar({ user, onLogout, mobileMenuOpen, onMenuToggle }) {
   const isStaff = ["teacher", "admin"].includes(user?.role);
 
@@ -20,15 +19,6 @@ function Navbar({ user, onLogout, mobileMenuOpen, onMenuToggle }) {
         <img className="brand-logo" src="/flint-logo.jpeg" alt="FLINT education logo" />
         <div className="brand-titles">
           <h1>FLINT</h1>
-=======
-function Navbar({ user, onLogout }) {
-  return (
-    <header className="app-navbar">
-      <div className="navbar-brand">
-        <span className="brand-logo">🎓</span>
-        <div className="brand-titles">
-          <h1>StudyMatch AI</h1>
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           <span className="brand-tagline">Peer-Learning & Academic Guidance</span>
         </div>
       </div>

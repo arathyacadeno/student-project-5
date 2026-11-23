@@ -1,19 +1,12 @@
 import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-<<<<<<< HEAD
 from pydantic import BaseModel, Field
-=======
-from pydantic import BaseModel
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from database import get_db
-<<<<<<< HEAD
 from academic_scope import normalize_academic_year
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 from models import Subject, Topic, Question, Student
 from auth import get_current_user, require_teacher
 
@@ -53,12 +46,9 @@ class SubjectBase(BaseModel):
     name: str
     code: Optional[str] = None
     description: Optional[str] = None
-<<<<<<< HEAD
     course: Optional[str] = Field(None, max_length=100)
     curriculum: Optional[str] = Field(None, max_length=150)
     academic_year: Optional[str] = Field(None, max_length=20)
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 class SubjectCreate(SubjectBase):
@@ -69,12 +59,9 @@ class SubjectUpdate(BaseModel):
     name: Optional[str] = None
     code: Optional[str] = None
     description: Optional[str] = None
-<<<<<<< HEAD
     course: Optional[str] = Field(None, max_length=100)
     curriculum: Optional[str] = Field(None, max_length=150)
     academic_year: Optional[str] = Field(None, max_length=20)
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 class SubjectOut(SubjectBase):
@@ -91,7 +78,6 @@ class SubjectOut(SubjectBase):
 # ─────────────────────────────────────────────
 
 @router.get("/subjects", response_model=List[SubjectOut])
-<<<<<<< HEAD
 def list_subjects(
     course: Optional[str] = None,
     curriculum: Optional[str] = None,
@@ -113,13 +99,6 @@ def list_subjects(
             subject for subject in subjects
             if normalize_academic_year(subject.academic_year) == normalized_year
         ]
-=======
-def list_subjects(db: Session = Depends(get_db)):
-    """
-    List all academic subjects along with their registered topics and question counts.
-    """
-    subjects = db.query(Subject).order_by(Subject.name).all()
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     results = []
 
     for s in subjects:
@@ -139,12 +118,9 @@ def list_subjects(db: Session = Depends(get_db)):
             name=s.name,
             code=s.code,
             description=s.description,
-<<<<<<< HEAD
             course=s.course,
             curriculum=s.curriculum,
             academic_year=s.academic_year,
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             topic_count=len(topics_out),
             topics=topics_out,
         ))
@@ -163,7 +139,6 @@ def create_subject(
     """
     require_teacher(current_user)
     name_clean = req.name.strip()
-<<<<<<< HEAD
     course = req.course.strip() if req.course and req.course.strip() else ""
     curriculum = req.curriculum.strip() if req.curriculum and req.curriculum.strip() else ""
     academic_year = req.academic_year.strip() if req.academic_year and req.academic_year.strip() else ""
@@ -173,9 +148,6 @@ def create_subject(
         func.lower(func.coalesce(Subject.curriculum, "")) == curriculum.lower(),
         func.lower(func.coalesce(Subject.academic_year, "")) == academic_year.lower(),
     ).first()
-=======
-    existing = db.query(Subject).filter(Subject.name.ilike(name_clean)).first()
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -186,12 +158,9 @@ def create_subject(
         name=name_clean,
         code=req.code.strip() if req.code else None,
         description=req.description.strip() if req.description else None,
-<<<<<<< HEAD
         course=course or None,
         curriculum=curriculum or None,
         academic_year=academic_year or None,
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     )
     db.add(new_sub)
     db.commit()
@@ -202,12 +171,9 @@ def create_subject(
         name=new_sub.name,
         code=new_sub.code,
         description=new_sub.description,
-<<<<<<< HEAD
         course=new_sub.course,
         curriculum=new_sub.curriculum,
         academic_year=new_sub.academic_year,
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         topic_count=0,
         topics=[],
     )
@@ -242,12 +208,9 @@ def get_subject_detail(subject_id: int, db: Session = Depends(get_db)):
         name=sub.name,
         code=sub.code,
         description=sub.description,
-<<<<<<< HEAD
         course=sub.course,
         curriculum=sub.curriculum,
         academic_year=sub.academic_year,
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         topic_count=len(topics_out),
         topics=topics_out,
     )
@@ -268,7 +231,6 @@ def update_subject(
     if not sub:
         raise HTTPException(status_code=404, detail="Subject not found.")
 
-<<<<<<< HEAD
     name = req.name.strip() if req.name is not None else sub.name
     course = req.course.strip() if req.course is not None else (sub.course or "")
     curriculum = req.curriculum.strip() if req.curriculum is not None else (sub.curriculum or "")
@@ -288,23 +250,16 @@ def update_subject(
 
     if req.name is not None:
         sub.name = name
-=======
-    if req.name is not None:
-        sub.name = req.name.strip()
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     if req.code is not None:
         sub.code = req.code.strip()
     if req.description is not None:
         sub.description = req.description.strip()
-<<<<<<< HEAD
     if req.course is not None:
         sub.course = req.course.strip() or None
     if req.curriculum is not None:
         sub.curriculum = req.curriculum.strip() or None
     if req.academic_year is not None:
         sub.academic_year = req.academic_year.strip() or None
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     db.commit()
     db.refresh(sub)

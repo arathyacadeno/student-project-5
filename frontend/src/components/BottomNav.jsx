@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom";
 
-<<<<<<< HEAD
 const iconShapes = {
   dashboard: (
     <>
@@ -106,23 +105,6 @@ function BottomNav({ user }) {
         { to: "/groups", label: "Groups", icon: "groups" },
         { to: "/profile", label: "Profile", icon: "profile" },
       ];
-=======
-function BottomNav({ user }) {
-  const isTeacher = user?.role === "teacher";
-
-  const navItems = [
-    { to: "/dashboard", label: "Dashboard", icon: "📊" },
-    { to: "/materials", label: "Notes", icon: "📚" },
-    { to: "/mock-tests", label: "Tests", icon: "📝" },
-    { to: "/mentor", label: "AI Mentor", icon: "🤖" },
-    { to: "/papers", label: "Papers", icon: "📄" },
-  ];
-
-  if (isTeacher) {
-    navItems[4] = { to: "/teacher", label: "Teacher", icon: "👨‍🏫" };
-    navItems[3] = { to: "/teacher/manage", label: "Manage", icon: "🛠️" };
-  }
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   return (
     <nav className="mobile-bottom-nav">
@@ -130,21 +112,14 @@ function BottomNav({ user }) {
         <NavLink
           key={item.to}
           to={item.to}
-<<<<<<< HEAD
           end={item.to === "/admin"}
-=======
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           className={({ isActive }) =>
             `bottom-nav-item ${isActive ? "active" : ""}`
           }
         >
-<<<<<<< HEAD
           <span className="bottom-nav-icon">
             <BottomNavIcon name={item.icon} />
           </span>
-=======
-          <span className="bottom-nav-icon">{item.icon}</span>
->>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           <span className="bottom-nav-label">{item.label}</span>
         </NavLink>
       ))}
