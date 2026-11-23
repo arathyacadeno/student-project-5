@@ -72,7 +72,16 @@ def form_balanced_study_groups(
         return []
 
     if n_students < min_size:
+<<<<<<< HEAD
         return []
+=======
+        # If fewer than min_size, keep all in one small group
+        return [{
+            "group_name": "Study Group 1",
+            "members": students,
+            "coverage_metrics": calculate_group_coverage(students),
+        }]
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     # Determine optimal number of groups so that every group has size in [min_size, max_size]
     # For instance: 6 -> two groups of 3; 7 -> 4 + 3; 8 -> 4 + 4; 9 -> 5 + 4; 10 -> 5 + 5 or 3+3+4.
@@ -215,6 +224,7 @@ def match_study_schedules(
     if not members_schedules:
         return []
 
+<<<<<<< HEAD
     total_members = len(members_schedules)
     results = []
 
@@ -299,4 +309,37 @@ def match_study_schedules(
         ),
         reverse=True,
     )
+=======
+    # Map of (day, start, end) -> list of available student_ids
+    slot_attendees: Dict[Tuple[str, str, str], Set[int]] = {}
+
+    for s_id, slots in members_schedules.items():
+        for slot in slots:
+            key = (slot["day_of_week"], slot["start_time"], slot["end_time"])
+            if key not in slot_attendees:
+                slot_attendees[key] = set()
+            slot_attendees[key].add(s_id)
+
+    total_members = len(members_schedules)
+    results = []
+
+    for (day, start, end), attendees in slot_attendees.items():
+        count = len(attendees)
+        match_rate = round((count / max(total_members, 1)) * 100.0, 1)
+
+        names = [member_names.get(sid, f"Student {sid}") for sid in attendees]
+        results.append({
+            "day_of_week": day,
+            "start_time": start,
+            "end_time": end,
+            "available_count": count,
+            "total_members": total_members,
+            "match_percentage": match_rate,
+            "available_students": names,
+            "is_unanimous": (count == total_members),
+        })
+
+    # Sort primarily by attendance count descending
+    results.sort(key=lambda r: (r["available_count"], r["match_percentage"]), reverse=True)
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     return results

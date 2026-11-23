@@ -1,16 +1,26 @@
 import { NavLink } from "react-router-dom";
 
+<<<<<<< HEAD
 function Sidebar({ user, mobileOpen, onClose }) {
   const isTeacher = user?.role === "teacher";
   const isAdmin = user?.role === "admin";
   const isStaff = isTeacher || isAdmin;
 
   const studentNavItems = [
+=======
+function Sidebar({ user }) {
+  const isTeacher = user?.role === "teacher";
+
+  const navItems = [
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     { to: "/dashboard", label: "Dashboard", icon: "📊" },
     { to: "/quiz", label: "Topic Quiz", icon: "🎯" },
     { to: "/groups", label: "Study Groups", icon: "👥" },
     { to: "/materials", label: "Study Materials", icon: "📚" },
+<<<<<<< HEAD
     { to: "/videos", label: "Course Videos", icon: "▶️" },
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     { to: "/guidance", label: "Course Guidance", icon: "🎓" },
     { to: "/mentor", label: "AI Mentor", icon: "🤖" },
     { to: "/mock-tests", label: "Mock Tests", icon: "📝" },
@@ -18,6 +28,7 @@ function Sidebar({ user, mobileOpen, onClose }) {
     { to: "/papers", label: "Previous Papers", icon: "📄" },
   ];
 
+<<<<<<< HEAD
   const navItems = isAdmin
     ? [
         { to: "/admin", label: "Admin Dashboard", icon: "🛡️" },
@@ -28,10 +39,13 @@ function Sidebar({ user, mobileOpen, onClose }) {
       ]
     : [...studentNavItems];
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   if (isTeacher) {
     navItems.push({ to: "/teacher", label: "Teacher Dashboard", icon: "👨‍🏫" });
     navItems.push({ to: "/teacher/manage", label: "Manage Content", icon: "🛠️" });
   }
+<<<<<<< HEAD
   if (!isStaff) {
     navItems.splice(1, 0, { to: "/profile", label: "My Profile", icon: "👤" });
   }
@@ -78,6 +92,36 @@ function Sidebar({ user, mobileOpen, onClose }) {
         </div>
       </aside>
     </>
+=======
+
+  return (
+    <aside className="app-sidebar">
+      <div className="sidebar-top">
+        <div className="sidebar-menu-heading">NAVIGATION</div>
+        <nav className="sidebar-nav">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `sidebar-link ${isActive ? "active" : ""}`
+              }
+            >
+              <span className="sidebar-icon">{item.icon}</span>
+              <span className="sidebar-label">{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      </div>
+
+      <div className="sidebar-footer">
+        <div className="sidebar-tip">
+          <span className="tip-title">💡 Study Tip</span>
+          <p>Mock tests update your Skill Profile and recommend targeted materials.</p>
+        </div>
+      </div>
+    </aside>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   );
 }
 

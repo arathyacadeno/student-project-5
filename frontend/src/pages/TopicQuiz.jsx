@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 import { useState, useEffect, useCallback } from "react";
+=======
+import { useState, useEffect } from "react";
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 import api from "../api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
 
+<<<<<<< HEAD
 function TopicQuiz() {
   const [subjects, setSubjects] = useState([]);
   const [profile, setProfile] = useState(null);
@@ -11,6 +16,10 @@ function TopicQuiz() {
   const [scopeMessage, setScopeMessage] = useState("");
   const [scopeError, setScopeError] = useState("");
   const [showScopeForm, setShowScopeForm] = useState(false);
+=======
+function TopicQuiz({ user }) {
+  const [subjects, setSubjects] = useState([]);
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [error, setError] = useState(null);
 
@@ -31,6 +40,7 @@ function TopicQuiz() {
   const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [revisionNotes, setRevisionNotes] = useState(null);
   const [loadingRevision, setLoadingRevision] = useState(false);
+<<<<<<< HEAD
   const hasCourseScope = Boolean(
     profile?.course?.trim() && profile?.college?.trim() && profile?.semester?.trim()
   );
@@ -64,6 +74,17 @@ function TopicQuiz() {
           academic_year: studentProfile.semester,
         },
       });
+=======
+
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  const fetchSubjects = async () => {
+    setLoadingSubjects(true);
+    try {
+      const res = await api.get("/api/v1/subjects");
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       setSubjects(res.data || []);
     } catch (err) {
       console.error("Error fetching subjects:", err);
@@ -71,6 +92,7 @@ function TopicQuiz() {
     } finally {
       setLoadingSubjects(false);
     }
+<<<<<<< HEAD
   }, []);
 
   useEffect(() => {
@@ -104,6 +126,8 @@ function TopicQuiz() {
     } finally {
       setSavingScope(false);
     }
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   };
 
   const handleStartQuiz = async (topic) => {
@@ -176,9 +200,12 @@ function TopicQuiz() {
   if (loadingSubjects) {
     return <LoadingSpinner message="Loading academic curriculum..." />;
   }
+<<<<<<< HEAD
   if (quizLoading) {
     return <LoadingSpinner message="Loading your topic quiz..." />;
   }
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   // ─────────────────────────────────────────────
   // 1. ACTIVE QUIZ TAKING VIEW
@@ -433,11 +460,15 @@ function TopicQuiz() {
               <div className="modal-body-scrollable">
                 {loadingRevision ? (
                   <LoadingSpinner message="Generating pedagogical revision notes with Gemini..." />
+<<<<<<< HEAD
                 ) : revisionNotes?.status === "pending" ? (
                   <p className="scope-feedback" role="status">
                     {revisionNotes.message} Your teacher will review these notes before they are shared. Select Generate AI Revision Notes again after approval.
                   </p>
                 ) : revisionNotes?.status === "approved" ? (
+=======
+                ) : revisionNotes ? (
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   <div>
                     <div className="revision-overview-box">
                       <h4>📖 Overview</h4>
@@ -463,11 +494,14 @@ function TopicQuiz() {
                     </div>
 
                     <div className="revision-block">
+<<<<<<< HEAD
                       <h4>🧑‍🏫 Teaching Outline:</h4>
                       <p>{revisionNotes.teaching_outline}</p>
                     </div>
 
                     <div className="revision-block">
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                       <h4>⚠️ Common Pitfalls to Avoid:</h4>
                       <ul>
                         {revisionNotes.common_pitfalls.map((cp, i) => (
@@ -529,13 +563,20 @@ function TopicQuiz() {
         <div>
           <h2>🎯 Topic-Wise Diagnostic Quizzes</h2>
           <p>
+<<<<<<< HEAD
             {hasCourseScope
               ? `Syllabus and quizzes for ${profile.course}, ${profile.semester}.`
               : "Add your current course to see its syllabus and quizzes."}
+=======
+            Select any subject and topic to test your conceptual understanding.
+            Your answers are evaluated using a Random Forest ML Classifier to
+            update your Skill Profile and study group matchings.
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           </p>
         </div>
       </div>
 
+<<<<<<< HEAD
       {error && (
         <ErrorMessage
           error={error}
@@ -637,6 +678,10 @@ function TopicQuiz() {
           {scopeMessage && <p className="scope-feedback" role="status">{scopeMessage}</p>}
         </div>
       ) : subjects.length > 0 ? (
+=======
+      {error && <ErrorMessage message={error} />}
+
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       <div className="curriculum-subjects-list">
         {subjects.map((sub) => (
           <div key={sub.id} className="subject-curriculum-card">
@@ -645,9 +690,12 @@ function TopicQuiz() {
                 <span className="subject-code-tag">{sub.code || "CURR"}</span>
                 <h3 className="subject-title">{sub.name}</h3>
                 <p className="subject-desc">{sub.description}</p>
+<<<<<<< HEAD
                 <p className="subject-desc">
                   {[sub.course, sub.curriculum, sub.academic_year].filter(Boolean).join(" · ")}
                 </p>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               </div>
               <span className="topic-count-pill">
                 {sub.topic_count} Topics
@@ -667,6 +715,7 @@ function TopicQuiz() {
 
                     <div className="topic-action-row">
                       <span className="q-count-text">
+<<<<<<< HEAD
                         📝 {t.question_count ?? 0} Questions
                       </span>
                       {t.question_count > 0 ? (
@@ -679,6 +728,16 @@ function TopicQuiz() {
                       ) : (
                         <span className="empty-subtext">Questions not published yet</span>
                       )}
+=======
+                        📝 {t.question_count || 3} Questions
+                      </span>
+                      <button
+                        className="action-btn-primary btn-sm"
+                        onClick={() => handleStartQuiz(t)}
+                      >
+                        Start Quiz &rarr;
+                      </button>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                     </div>
                   </div>
                 ))
@@ -689,7 +748,10 @@ function TopicQuiz() {
           </div>
         ))}
       </div>
+<<<<<<< HEAD
       ) : null}
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     </div>
   );
 }

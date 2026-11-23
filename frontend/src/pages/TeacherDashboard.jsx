@@ -1,11 +1,20 @@
+<<<<<<< HEAD
 import { useState, useEffect, useCallback } from "react";
+=======
+import { useState, useEffect } from "react";
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+<<<<<<< HEAD
 import TeacherClassesPanel from "./TeacherClassesPanel";
 
 function TeacherDashboard({ user, isAdmin = false }) {
+=======
+
+function TeacherDashboard({ user }) {
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   const navigate = useNavigate();
 
   const [stats, setStats] = useState(null);
@@ -23,10 +32,13 @@ function TeacherDashboard({ user, isAdmin = false }) {
   // Guidance Documents (RAG) State
   const [guidanceDocs, setGuidanceDocs] = useState([]);
   const [docsLoading, setDocsLoading] = useState(false);
+<<<<<<< HEAD
   const [revisionQueue, setRevisionQueue] = useState([]);
   const [revisionQueueLoading, setRevisionQueueLoading] = useState(false);
   const [guidanceActivity, setGuidanceActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(false);
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   const [showUploadDocModal, setShowUploadDocModal] = useState(false);
   const [docTitle, setDocTitle] = useState("");
   const [docType, setDocType] = useState("exam");
@@ -37,6 +49,7 @@ function TeacherDashboard({ user, isAdmin = false }) {
   const [studyGroups, setStudyGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
   const [generatingGroups, setGeneratingGroups] = useState(false);
+<<<<<<< HEAD
   const [selectedClassId, setSelectedClassId] = useState(null);
 
   const handleSelectedClassChange = useCallback((classId) => {
@@ -49,6 +62,14 @@ function TeacherDashboard({ user, isAdmin = false }) {
       const res = await api.get("/teacher/dashboard", {
         params: selectedClassId ? { class_id: selectedClassId } : {},
       });
+=======
+
+  const fetchStats = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get("/teacher/dashboard");
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       setStats(res.data);
     } catch (err) {
       console.error(err);
@@ -82,6 +103,7 @@ function TeacherDashboard({ user, isAdmin = false }) {
     }
   };
 
+<<<<<<< HEAD
   const fetchRevisionQueue = async () => {
     setRevisionQueueLoading(true);
     try {
@@ -108,6 +130,8 @@ function TeacherDashboard({ user, isAdmin = false }) {
     }
   };
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   const fetchStudyGroups = async () => {
     setGroupsLoading(true);
     try {
@@ -121,6 +145,7 @@ function TeacherDashboard({ user, isAdmin = false }) {
   };
 
   const handleRegenerateGroups = async () => {
+<<<<<<< HEAD
     if (!selectedClassId) {
       alert("Create or select a class before generating groups.");
       return;
@@ -129,12 +154,21 @@ function TeacherDashboard({ user, isAdmin = false }) {
     try {
       const res = await api.post("/api/v1/groups/generate", {
         class_id: selectedClassId,
+=======
+    setGeneratingGroups(true);
+    try {
+      const res = await api.post("/api/v1/groups/generate", {
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         min_size: 3,
         max_size: 5,
         reset_existing: true,
       });
       setStudyGroups(res.data || []);
+<<<<<<< HEAD
       alert("Groups generated for teacher review. Approve a group to make it visible to its students.");
+=======
+      alert("Study groups successfully re-balanced and optimized using Random Forest skill profiles!");
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     } catch (err) {
       console.error("Group generation error:", err);
       alert(err.response?.data?.detail || "Error generating study groups.");
@@ -143,6 +177,7 @@ function TeacherDashboard({ user, isAdmin = false }) {
     }
   };
 
+<<<<<<< HEAD
   const handleReviewGroup = async (groupId, decision) => {
     if (decision === "reject" && !window.confirm("Reject this proposed study group?")) return;
     try {
@@ -176,6 +211,14 @@ function TeacherDashboard({ user, isAdmin = false }) {
   useEffect(() => {
     fetchStats();
   }, [selectedClassId]);
+=======
+  useEffect(() => {
+    fetchStats();
+    fetchCounsellingRequests();
+    fetchGuidanceDocs();
+    fetchStudyGroups();
+  }, []);
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   const handleUpdateRequest = async (e) => {
     e.preventDefault();
@@ -207,12 +250,20 @@ function TeacherDashboard({ user, isAdmin = false }) {
         title: docTitle,
         doc_type: docType,
         content: docContent,
+<<<<<<< HEAD
+=======
+        is_approved: true,
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       });
       setShowUploadDocModal(false);
       setDocTitle("");
       setDocContent("");
       fetchGuidanceDocs();
+<<<<<<< HEAD
       alert("Guidance document uploaded and queued for teacher approval before chatbot use.");
+=======
+      alert("Guidance document uploaded and vector embeddings indexed for AI Chatbot!");
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     } catch (err) {
       console.error("Upload doc error:", err);
       alert("Failed to upload guidance document.");
@@ -239,7 +290,11 @@ function TeacherDashboard({ user, isAdmin = false }) {
       {/* Header */}
       <div className="page-header-row">
         <div>
+<<<<<<< HEAD
           <h2>{isAdmin ? "🌐 Platform Academic Command Center" : "👨‍🏫 Teacher Academic Command Center"} ({user?.name || (isAdmin ? "Admin" : "Teacher")})</h2>
+=======
+          <h2>👨‍🏫 Teacher Academic Command Center ({user?.name || "Teacher"})</h2>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           <p className="page-subtitle">
             Monitor class-wide weak topics, respond to career counselling requests, curate verified guidance documents, and publish instructional resources.
           </p>
@@ -260,6 +315,7 @@ function TeacherDashboard({ user, isAdmin = false }) {
         </div>
       </div>
 
+<<<<<<< HEAD
       <TeacherClassesPanel isAdmin={isAdmin} onSelectedClassChange={handleSelectedClassChange} />
 
       <section className="teacher-section-card" style={{ marginBottom: "28px" }}>
@@ -364,6 +420,8 @@ function TeacherDashboard({ user, isAdmin = false }) {
         )}
       </section>
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       {/* KPI Stats */}
       <section className="kpi-grid">
         <div className="kpi-card info">
@@ -380,7 +438,11 @@ function TeacherDashboard({ user, isAdmin = false }) {
           <div className="kpi-details">
             <span className="kpi-num">{stats?.at_risk_students?.length || 0}</span>
             <span className="kpi-label">Students Needing Support</span>
+<<<<<<< HEAD
             <span className="kpi-subtext">Weak areas or declining quiz scores</span>
+=======
+            <span className="kpi-subtext">Have 1+ weak topics</span>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           </div>
         </div>
 
@@ -407,9 +469,15 @@ function TeacherDashboard({ user, isAdmin = false }) {
       <section className="teacher-section-card" style={{ marginBottom: "28px" }}>
         <div className="card-head-row">
           <div>
+<<<<<<< HEAD
             <h3>🤝 Student Study Support & Higher Studies Requests</h3>
             <p className="subtext">
               Review teacher-led study requests, peer-match needs, and questions about courses, exams, and career pathways.
+=======
+            <h3>🤝 Student Career & Higher Studies Counselling Queue</h3>
+            <p className="subtext">
+              Direct student inquiries regarding course options, entrance exams, and career pathways
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             </p>
           </div>
           <button
@@ -430,7 +498,10 @@ function TeacherDashboard({ user, isAdmin = false }) {
               <thead>
                 <tr>
                   <th>Student</th>
+<<<<<<< HEAD
                   <th>Request Type</th>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   <th>Preferred Mode</th>
                   <th>Doubt / Question</th>
                   <th>Submitted</th>
@@ -445,7 +516,10 @@ function TeacherDashboard({ user, isAdmin = false }) {
                     <td>
                       <strong>{req.student_name || `Student #${req.student_id}`}</strong>
                     </td>
+<<<<<<< HEAD
                     <td>{req.request_type === "study_support" ? "Study support" : "Higher studies"}</td>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                     <td>
                       <span className="mode-badge">📍 {req.preferred_mode}</span>
                     </td>
@@ -487,15 +561,25 @@ function TeacherDashboard({ user, isAdmin = false }) {
           <div>
             <h3>👥 Balanced Study Groups & Peer-Teaching Coverage (Module 7 & 8)</h3>
             <p className="subtext">
+<<<<<<< HEAD
               Matches students within the same course, board/institution, and year/semester so peers with strong mastery can help with weak topics.
+=======
+              Optimization algorithm matches 3–5 students per group ensuring weak topics are covered by peers with strong mastery
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             </p>
           </div>
           <button
             className="action-btn-primary btn-sm"
             onClick={handleRegenerateGroups}
+<<<<<<< HEAD
             disabled={generatingGroups || !selectedClassId}
           >
             {generatingGroups ? "Optimizing Groups..." : "⚡ Generate Groups for Selected Class"}
+=======
+            disabled={generatingGroups}
+          >
+            {generatingGroups ? "Optimizing Groups..." : "⚡ Re-Run Intelligent Grouping"}
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           </button>
         </div>
 
@@ -503,7 +587,11 @@ function TeacherDashboard({ user, isAdmin = false }) {
           <p>Analyzing student skill profiles and matching groups...</p>
         ) : studyGroups.length === 0 ? (
           <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+<<<<<<< HEAD
             No peer groups are available yet. Generate groups to match students who share a course, board/institution, and year/semester.
+=======
+            No study groups generated yet. Click "Re-Run Intelligent Grouping" above to partition the class into balanced study groups.
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           </p>
         ) : (
           <div className="class-topics-table-wrapper">
@@ -511,14 +599,20 @@ function TeacherDashboard({ user, isAdmin = false }) {
               <thead>
                 <tr>
                   <th>Group Name</th>
+<<<<<<< HEAD
                   <th>Review status</th>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   <th>Members (3-5)</th>
                   <th>Weak-Topic Coverage</th>
                   <th>Teaching Pairs</th>
                   <th>Uncovered Topics</th>
                   <th>Schedule Matches</th>
+<<<<<<< HEAD
                   <th>Follow-up progress</th>
                   <th>Teacher review</th>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 </tr>
               </thead>
               <tbody>
@@ -528,11 +622,14 @@ function TeacherDashboard({ user, isAdmin = false }) {
                       <strong>{grp.name}</strong>
                     </td>
                     <td>
+<<<<<<< HEAD
                       <span className={`status-badge status-${grp.status}`}>
                         {grp.status.toUpperCase()}
                       </span>
                     </td>
                     <td>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                       <div className="pills-wrap">
                         {grp.members.map((m) => (
                           <span key={m.student_id} className="degree-tag">
@@ -571,6 +668,7 @@ function TeacherDashboard({ user, isAdmin = false }) {
                         📅 {grp.common_schedules.length} overlap slots
                       </span>
                     </td>
+<<<<<<< HEAD
                     <td>
                       {grp.progress_summary?.change_points === null ||
                       grp.progress_summary?.change_points === undefined ? (
@@ -605,6 +703,8 @@ function TeacherDashboard({ user, isAdmin = false }) {
                         <span className="subtext">Reviewed</span>
                       )}
                     </td>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   </tr>
                 ))}
               </tbody>
@@ -746,7 +846,11 @@ function TeacherDashboard({ user, isAdmin = false }) {
           <div className="card-head-row">
             <div>
               <h3>🚨 Students Requiring Personal Intervention</h3>
+<<<<<<< HEAD
               <p className="subtext">Flags weak topics and repeated downward trends in recent topic quizzes.</p>
+=======
+              <p className="subtext">Identified via adaptive mock test marks and skill analytics</p>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             </div>
           </div>
 
@@ -767,6 +871,7 @@ function TeacherDashboard({ user, isAdmin = false }) {
                       </div>
                     </div>
                     <span className="weak-flag">
+<<<<<<< HEAD
                       {st.weak_topics_count > 0
                         ? `${st.weak_topics_count} Weak Topics`
                         : "Progress alert"}
@@ -779,6 +884,12 @@ function TeacherDashboard({ user, isAdmin = false }) {
                     </p>
                   )}
 
+=======
+                      {st.weak_topics_count} Weak Topics
+                    </span>
+                  </div>
+
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   <div className="student-weak-pills">
                     {st.weak_topics.map((t, i) => (
                       <span key={i} className="danger-topic-pill">
@@ -791,10 +902,20 @@ function TeacherDashboard({ user, isAdmin = false }) {
                     <span>Overall Mastery: <strong>{st.average_mastery}%</strong></span>
                     <button
                       className="contact-btn"
+<<<<<<< HEAD
                       onClick={handleRegenerateGroups}
                       disabled={!selectedClassId || generatingGroups}
                     >
                       ⚡ Rebuild Class Groups
+=======
+                      onClick={() =>
+                        alert(
+                          `Intervention memo created for ${st.name}. StudyMatch AI peer group matcher will pair ${st.name} with a strong peer in: ${st.weak_topics.join(", ")}.`
+                        )
+                      }
+                    >
+                      🤝 Pair in Peer Study Group
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                     </button>
                   </div>
                 </div>

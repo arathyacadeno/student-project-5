@@ -10,16 +10,23 @@ import StudentDashboard from "./pages/StudentDashboard";
 import TopicQuiz from "./pages/TopicQuiz";
 import StudyGroups from "./pages/StudyGroups";
 import StudyMaterials from "./pages/StudyMaterials";
+<<<<<<< HEAD
 import CourseVideos from "./pages/CourseVideos";
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 import CourseGuidance from "./pages/CourseGuidance";
 import AIMentor from "./pages/AIMentor";
 import MockTests from "./pages/MockTests";
 import CourseSummaries from "./pages/CourseSummaries";
 import PreviousPapers from "./pages/PreviousPapers";
+<<<<<<< HEAD
 import StudentProfile from "./pages/StudentProfile";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminManagementPage from "./pages/AdminManagementPage";
+=======
+import TeacherDashboard from "./pages/TeacherDashboard";
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -81,6 +88,7 @@ function App() {
           path="/dashboard"
           element={
             user ? (
+<<<<<<< HEAD
               user.role === "admin" ? (
                 <Navigate to="/admin" replace />
               ) : (
@@ -103,6 +111,13 @@ function App() {
               </Layout>
             ) : (
               <Navigate to={user ? "/dashboard" : "/login"} replace />
+=======
+              <Layout user={user} onLogout={handleLogout}>
+                <StudentDashboard user={user} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             )
           }
         />
@@ -147,6 +162,7 @@ function App() {
         />
 
         <Route
+<<<<<<< HEAD
           path="/videos"
           element={
             user ? (
@@ -160,6 +176,8 @@ function App() {
         />
 
         <Route
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           path="/guidance"
           element={
             user ? (
@@ -227,11 +245,16 @@ function App() {
         <Route
           path="/teacher"
           element={
+<<<<<<< HEAD
             user && user.role === "teacher" ? (
+=======
+            user ? (
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               <Layout user={user} onLogout={handleLogout}>
                 <TeacherDashboard user={user} />
               </Layout>
             ) : (
+<<<<<<< HEAD
               <Navigate to={user?.role === "admin" ? "/admin" : user ? "/dashboard" : "/login"} replace />
             )
           }
@@ -309,16 +332,27 @@ function App() {
               </Layout>
             ) : (
               <Navigate to={user ? "/dashboard" : "/login"} replace />
+=======
+              <Navigate to="/login" replace />
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             )
           }
         />
 
+<<<<<<< HEAD
         <Route
           path="/teacher/manage"
           element={
             user?.role === "admin" ? (
               <Navigate to="/admin/manage/content" replace />
             ) : user?.role === "teacher" ? (
+=======
+        {/* Catch-all fallback */}
+        <Route
+          path="/teacher/manage"
+          element={
+            user && user.role === "teacher" ? (
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               <Layout user={user} onLogout={handleLogout}>
                 <TeacherManagement />
               </Layout>

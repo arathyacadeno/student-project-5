@@ -7,7 +7,11 @@ import EmptyState from "../components/EmptyState";
 
 function PreviousPapers({ user }) {
   const navigate = useNavigate();
+<<<<<<< HEAD
   const isTeacher = ["teacher", "admin"].includes(user?.role);
+=======
+  const isTeacher = user?.role === "teacher";
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   // Views: 'list' | 'study' | 'timed_exam' | 'exam_result'
   const [viewMode, setViewMode] = useState("list");
@@ -35,6 +39,7 @@ function PreviousPapers({ user }) {
 
   // Teacher Upload Modal
   const [showUploadModal, setShowUploadModal] = useState(false);
+<<<<<<< HEAD
   const [uploadExamName, setUploadExamName] = useState("");
   const [uploadSubject, setUploadSubject] = useState("");
   const [uploadCourse, setUploadCourse] = useState("");
@@ -70,16 +75,49 @@ function PreviousPapers({ user }) {
       if (previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
+=======
+  const [uploadExamName, setUploadExamName] = useState("JEE Main");
+  const [uploadSubject, setUploadSubject] = useState("Mathematics");
+  const [uploadYear, setUploadYear] = useState(2024);
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadTopicTags, setUploadTopicTags] = useState("");
+  const [uploadFilePath, setUploadFilePath] = useState("");
+  const [uploadAnswerKey, setUploadAnswerKey] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  // PDF Preview Modal
+  const [previewPaper, setPreviewPaper] = useState(null);
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   const fetchPapers = async () => {
     setLoading(true);
     setError(null);
     try {
+<<<<<<< HEAD
       const res = await api.get("/api/v1/papers", { params: { skip: 0, limit: 100 } });
       setPapers(res.data.items || []);
     } catch (err) {
       console.error("Question papers request failed:", err);
       setError(err.response?.data?.detail || "Failed to load question papers library.");
+=======
+      // First try extended endpoint /api/v1/papers
+      const params = {};
+      if (selectedSubject !== "All") params.subject = selectedSubject;
+      if (selectedExam !== "All") params.exam = selectedExam;
+      if (selectedYear !== "All") params.year = Number(selectedYear);
+      if (topicSearch.trim()) params.topic = topicSearch.trim();
+
+      const res = await api.get("/api/v1/papers", { params });
+      setPapers(res.data.items || []);
+    } catch (err) {
+      console.warn("Extended papers endpoint error, falling back to /papers:", err);
+      try {
+        const fallback = await api.get("/papers");
+        setPapers(fallback.data || []);
+      } catch (e2) {
+        setError("Failed to load question papers library.");
+      }
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     } finally {
       setLoading(false);
     }
@@ -87,7 +125,11 @@ function PreviousPapers({ user }) {
 
   useEffect(() => {
     fetchPapers();
+<<<<<<< HEAD
   }, []);
+=======
+  }, [selectedSubject, selectedExam, selectedYear]);
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   const handleSubmitExam = useCallback(async () => {
     if (!activePaper || submittingExam) return;
@@ -174,6 +216,7 @@ function PreviousPapers({ user }) {
   // Teacher: Upload Paper
   const handleUploadPaper = async (e) => {
     e.preventDefault();
+<<<<<<< HEAD
     if (!uploadPaperFile) {
       setUploadError("Choose the question paper PDF to upload.");
       return;
@@ -195,11 +238,29 @@ function PreviousPapers({ user }) {
 
       await api.post("/api/v1/papers/upload", payload, {
         headers: { "Content-Type": "multipart/form-data" },
+=======
+    setUploading(true);
+    try {
+      const tagsList = uploadTopicTags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      await api.post("/api/v1/papers", {
+        exam_name: uploadExamName,
+        subject: uploadSubject,
+        year: Number(uploadYear),
+        title: uploadTitle,
+        topic_tags: tagsList,
+        file_path: uploadFilePath || `/papers/${uploadExamName.toLowerCase().replace(" ", "_")}_${uploadYear}.pdf`,
+        answer_key_file: uploadAnswerKey || null,
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       });
 
       setShowUploadModal(false);
       setUploadTitle("");
       setUploadTopicTags("");
+<<<<<<< HEAD
       setUploadExamName("");
       setUploadSubject("");
       setUploadCourse("");
@@ -213,11 +274,19 @@ function PreviousPapers({ user }) {
       console.error("Upload paper error:", err);
       const detail = err.response?.data?.detail;
       setUploadError(typeof detail === "string" ? detail : "Failed to upload the paper PDF.");
+=======
+      fetchPapers();
+      alert("Paper submitted successfully for class library!");
+    } catch (err) {
+      console.error("Upload paper error:", err);
+      alert("Failed to upload paper metadata.");
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     } finally {
       setUploading(false);
     }
   };
 
+<<<<<<< HEAD
   const handleOpenPreview = async (paper) => {
     setPreviewPaper(paper);
     setPreviewUrl("");
@@ -263,6 +332,8 @@ function PreviousPapers({ user }) {
     }
   };
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   // Teacher: Approve Paper
   const handleApprovePaper = async (paperId) => {
     try {
@@ -284,9 +355,13 @@ function PreviousPapers({ user }) {
             <div>
               <h2>📄 Solved Previous-Year Question Papers</h2>
               <p className="page-subtitle">
+<<<<<<< HEAD
                 {isTeacher
                   ? "Upload and approve official papers, then share them with the matching course and semester."
                   : "Approved question papers and answer keys for your current course and semester."}
+=======
+                Official past examinations with step-by-step solutions, timed simulation mode, and automated remediation links back to study materials.
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               </p>
             </div>
             {isTeacher && (
@@ -303,7 +378,11 @@ function PreviousPapers({ user }) {
           <div className="papers-filters-bar">
             {/* Subject Tabs */}
             <div className="stream-filter-pills">
+<<<<<<< HEAD
               {["All", ...paperSubjects].map((subj) => (
+=======
+              {["All", "Biology", "Mathematics", "Computer Science", "Physics"].map((subj) => (
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 <button
                   key={subj}
                   className={`filter-pill ${selectedSubject === subj ? "active" : ""}`}
@@ -323,9 +402,17 @@ function PreviousPapers({ user }) {
                 style={{ padding: "6px 12px", fontSize: "13px" }}
               >
                 <option value="All">All Exams</option>
+<<<<<<< HEAD
                 {paperExams.map((exam) => (
                   <option key={exam} value={exam}>{exam}</option>
                 ))}
+=======
+                <option value="JEE Main">JEE Main</option>
+                <option value="NEET-UG">NEET-UG</option>
+                <option value="GATE">GATE</option>
+                <option value="KEAM">KEAM</option>
+                <option value="Board">State Board / CBSE</option>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               </select>
 
               <select
@@ -335,9 +422,15 @@ function PreviousPapers({ user }) {
                 style={{ padding: "6px 12px", fontSize: "13px" }}
               >
                 <option value="All">All Years</option>
+<<<<<<< HEAD
                 {paperYears.map((year) => (
                   <option key={year} value={year}>{year}</option>
                 ))}
+=======
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               </select>
 
               <input
@@ -345,6 +438,10 @@ function PreviousPapers({ user }) {
                 placeholder="🔍 Search topic..."
                 value={topicSearch}
                 onChange={(e) => setTopicSearch(e.target.value)}
+<<<<<<< HEAD
+=======
+                onKeyDown={(e) => e.key === "Enter" && fetchPapers()}
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 className="search-input"
                 style={{ padding: "6px 12px", fontSize: "13px", width: "160px" }}
               />
@@ -355,6 +452,7 @@ function PreviousPapers({ user }) {
             <LoadingSpinner message="Loading previous year question papers..." />
           ) : error ? (
             <ErrorMessage error={error} onRetry={fetchPapers} />
+<<<<<<< HEAD
           ) : visiblePapers.length === 0 ? (
             <EmptyState
               icon="📄"
@@ -364,6 +462,13 @@ function PreviousPapers({ user }) {
                   ? "Upload an official paper and answer key, then set the matching course, college, and semester."
                   : "A teacher must upload and approve a question paper for your course and semester. You can then download the paper and answer key.")
                 : "Try clearing the filters or topic search."}
+=======
+          ) : papers.length === 0 ? (
+            <EmptyState
+              icon="📄"
+              title="No papers found matching criteria"
+              message="Try clearing filters or search term."
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               actionText="Reset Filters"
               onAction={() => {
                 setSelectedSubject("All");
@@ -374,15 +479,22 @@ function PreviousPapers({ user }) {
             />
           ) : (
             <div className="courses-grid">
+<<<<<<< HEAD
               {visiblePapers.map((paper) => (
+=======
+              {papers.map((paper) => (
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 <div key={paper.id} className="course-card-enhanced">
                   <div className="course-card-header">
                     <span className="exam-code-badge">{paper.exam_name || "Official"}</span>
                     <span className="degree-tag">{paper.year}</span>
                     <span className="stream-pill">{paper.subject}</span>
+<<<<<<< HEAD
                     {paper.academic_year && (
                       <span className="degree-tag">{paper.academic_year}</span>
                     )}
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   </div>
 
                   <h3 className="course-card-title">{paper.title}</h3>
@@ -398,13 +510,20 @@ function PreviousPapers({ user }) {
                   )}
 
                   <div className="card-key-details" style={{ marginTop: "12px" }}>
+<<<<<<< HEAD
                     <div>📄 <strong>Format:</strong> Question Paper PDF</div>
                     <div>🔑 <strong>Answer Key:</strong> {paper.answer_key_file ? "Available" : "Not uploaded"}</div>
+=======
+                    <div>📄 <strong>Format:</strong> Solved PDF</div>
+                    <div>⏱️ <strong>Limit:</strong> {paper.time_limit_minutes || 60} mins</div>
+                    <div>🎯 <strong>Marks:</strong> {paper.total_marks || 50}</div>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   </div>
 
                   <div className="card-bottom-actions">
                     <button
                       className="action-btn-secondary btn-sm"
+<<<<<<< HEAD
                       onClick={() => handleOpenPreview(paper)}
                     >
                       📄 View PDF
@@ -423,6 +542,28 @@ function PreviousPapers({ user }) {
                         🔑 Answer Key
                       </button>
                     )}
+=======
+                      onClick={() => setPreviewPaper(paper)}
+                    >
+                      📄 View PDF
+                    </button>
+                    {paper.answer_key_file && (
+                      <button
+                        className="action-btn-secondary btn-sm"
+                        onClick={() =>
+                          alert(`Answer Key & Solutions available for ${paper.title} at ${paper.answer_key_file}`)
+                        }
+                      >
+                        🔑 Key
+                      </button>
+                    )}
+                    <button
+                      className="action-btn-primary btn-sm"
+                      onClick={() => handleStartTimedExam(paper.id)}
+                    >
+                      ⏱️ Timed Attempt
+                    </button>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   </div>
 
                   {isTeacher && paper.approval_status === "pending" && (
@@ -659,6 +800,7 @@ function PreviousPapers({ user }) {
               <div className="info-grid-2col" style={{ marginBottom: "12px" }}>
                 <div>
                   <label>Exam Name:</label>
+<<<<<<< HEAD
                   <input
                     type="text"
                     maxLength={100}
@@ -669,10 +811,25 @@ function PreviousPapers({ user }) {
                     className="search-input"
                     style={{ width: "100%", marginTop: "4px" }}
                   />
+=======
+                  <select
+                    value={uploadExamName}
+                    onChange={(e) => setUploadExamName(e.target.value)}
+                    className="search-input"
+                    style={{ width: "100%", marginTop: "4px" }}
+                  >
+                    <option value="JEE Main">JEE Main</option>
+                    <option value="NEET-UG">NEET-UG</option>
+                    <option value="GATE">GATE</option>
+                    <option value="KEAM">KEAM</option>
+                    <option value="Board">State Board / CBSE</option>
+                  </select>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 </div>
 
                 <div>
                   <label>Subject:</label>
+<<<<<<< HEAD
                   <input
                     type="text"
                     maxLength={100}
@@ -683,6 +840,19 @@ function PreviousPapers({ user }) {
                     className="search-input"
                     style={{ width: "100%", marginTop: "4px" }}
                   />
+=======
+                  <select
+                    value={uploadSubject}
+                    onChange={(e) => setUploadSubject(e.target.value)}
+                    className="search-input"
+                    style={{ width: "100%", marginTop: "4px" }}
+                  >
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Biology">Biology</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Physics">Physics</option>
+                  </select>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 </div>
               </div>
 
@@ -715,6 +885,7 @@ function PreviousPapers({ user }) {
                 </div>
               </div>
 
+<<<<<<< HEAD
               <div className="info-grid-2col" style={{ marginBottom: "8px" }}>
                 <div>
                   <label>Course (for student matching):</label>
@@ -757,6 +928,8 @@ function PreviousPapers({ user }) {
                 Fill in all three course fields so only matching students can see this paper and its answer key.
               </p>
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               <div className="form-group" style={{ marginBottom: "12px" }}>
                 <label>Topic Tags (comma-separated):</label>
                 <input
@@ -770,16 +943,28 @@ function PreviousPapers({ user }) {
               </div>
 
               <div className="form-group" style={{ marginBottom: "12px" }}>
+<<<<<<< HEAD
                 <label>Question Paper PDF (max 20 MB):</label>
                 <input
                   type="file"
                   accept="application/pdf,.pdf"
                   onChange={(e) => setUploadPaperFile(e.target.files?.[0] || null)}
                   required
+=======
+                <label>Paper Document Path / URL (PDF):</label>
+                <input
+                  type="text"
+                  placeholder="/papers/jee_main_2024_maths.pdf"
+                  value={uploadFilePath}
+                  onChange={(e) => setUploadFilePath(e.target.value)}
+                  className="search-input"
+                  style={{ width: "100%", marginTop: "4px" }}
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 />
               </div>
 
               <div className="form-group" style={{ marginBottom: "16px" }}>
+<<<<<<< HEAD
                 <label>Answer Key / Solution PDF (Optional, max 20 MB):</label>
                 <input
                   type="file"
@@ -788,6 +973,18 @@ function PreviousPapers({ user }) {
                 />
               </div>
               {uploadError && <p className="auth-error-msg" role="alert">{uploadError}</p>}
+=======
+                <label>Answer Key / Solution Path (Optional):</label>
+                <input
+                  type="text"
+                  placeholder="/papers/jee_main_2024_maths_ans.pdf"
+                  value={uploadAnswerKey}
+                  onChange={(e) => setUploadAnswerKey(e.target.value)}
+                  className="search-input"
+                  style={{ width: "100%", marginTop: "4px" }}
+                />
+              </div>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
               <div className="modal-footer">
                 <button
@@ -816,14 +1013,19 @@ function PreviousPapers({ user }) {
           <div className="modal-dialog modal-md">
             <div className="modal-header">
               <h3>📄 {previewPaper.title}</h3>
+<<<<<<< HEAD
               <button className="modal-close" onClick={() => {
                 setPreviewPaper(null);
                 setPreviewUrl("");
               }}>
+=======
+              <button className="modal-close" onClick={() => setPreviewPaper(null)}>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 &times;
               </button>
             </div>
             <div className="modal-body" style={{ textAlign: "center", padding: "30px 20px" }}>
+<<<<<<< HEAD
               <h4>{previewPaper.exam_name} {previewPaper.year} — {previewPaper.subject}</h4>
               {previewUrl ? (
                 <iframe
@@ -834,6 +1036,13 @@ function PreviousPapers({ user }) {
               ) : (
                 <p>Loading PDF preview...</p>
               )}
+=======
+              <div style={{ fontSize: "48px", marginBottom: "12px" }}>📑</div>
+              <h4>{previewPaper.exam_name} {previewPaper.year} — {previewPaper.subject}</h4>
+              <p style={{ color: "var(--text-muted)", marginTop: "6px" }}>
+                File Path: <code>{previewPaper.file_path}</code>
+              </p>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
               {previewPaper.topic_tags && (
                 <div className="pills-wrap" style={{ justifyContent: "center", margin: "16px 0" }}>
@@ -848,6 +1057,7 @@ function PreviousPapers({ user }) {
               <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginTop: "20px" }}>
                 <button
                   className="action-btn-primary"
+<<<<<<< HEAD
                   onClick={() => handleDownloadPaper(previewPaper)}
                 >
                   ⬇️ Download PDF Paper
@@ -860,6 +1070,23 @@ function PreviousPapers({ user }) {
                     🔑 Download Answer Key
                   </button>
                 )}
+=======
+                  onClick={() => {
+                    alert(`Opening download link for: ${previewPaper.file_path}`);
+                  }}
+                >
+                  ⬇️ Download PDF Paper
+                </button>
+                <button
+                  className="action-btn-secondary"
+                  onClick={() => {
+                    setPreviewPaper(null);
+                    handleStartTimedExam(previewPaper.id);
+                  }}
+                >
+                  ⏱️ Attempt in Timed Mode
+                </button>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               </div>
             </div>
           </div>

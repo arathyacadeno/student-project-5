@@ -1,4 +1,5 @@
 import datetime
+<<<<<<< HEAD
 from typing import Optional, List, Any, Union
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, EmailStr
@@ -8,6 +9,15 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Student, StudentProfile, TeacherProfile, StudyClass, ClassEnrollment
 from schemas import TeacherRegistrationPendingResponse
+=======
+from typing import Optional, List, Any
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, EmailStr
+from sqlalchemy.orm import Session
+
+from database import get_db
+from models import Student, StudentProfile, TeacherProfile
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 from auth import (
     get_password_hash,
     verify_password,
@@ -31,13 +41,19 @@ class RegisterRequest(BaseModel):
     role: Optional[str] = "student" # "student" or "teacher"
     # Extended profile attributes
     department: Optional[str] = None
+<<<<<<< HEAD
     subject: Optional[str] = None
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     semester: Optional[str] = None
     college: Optional[str] = None
     phone: Optional[str] = None
     course: Optional[str] = None
     learning_interests: Optional[List[str]] = None
+<<<<<<< HEAD
     class_code: Optional[str] = None
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 class LoginRequest(BaseModel):
@@ -94,6 +110,7 @@ class ProfileUpdateRequest(BaseModel):
 # AUTHENTICATION ENDPOINTS
 # ─────────────────────────────────────────────
 
+<<<<<<< HEAD
 @router.post(
     "/register",
     response_model=Union[TokenResponse, TeacherRegistrationPendingResponse],
@@ -104,10 +121,15 @@ def register_user(
     response: Response,
     db: Session = Depends(get_db),
 ):
+=======
+@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+def register_user(req: RegisterRequest, db: Session = Depends(get_db)):
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     """
     Register a new Student or Teacher with profile fields and return JWT token.
     """
     email_clean = req.email.strip().lower()
+<<<<<<< HEAD
     role_clean = (req.role or "student").strip().lower()
     if role_clean not in {"student", "teacher"}:
         raise HTTPException(status_code=422, detail="Registration role must be student or teacher.")
@@ -128,12 +150,16 @@ def register_user(
             )
 
     existing = db.query(Student).filter(func.lower(Student.email) == email_clean).first()
+=======
+    existing = db.query(Student).filter(Student.email == email_clean).first()
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with this email address already exists.",
         )
 
+<<<<<<< HEAD
     study_class = None
     if role_clean == "student" and req.class_code and req.class_code.strip():
         study_class = db.query(StudyClass).filter(
@@ -145,47 +171,74 @@ def register_user(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Class code is invalid or inactive.",
             )
+=======
+    role_clean = "student"
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     new_user = Student(
         name=req.name.strip(),
         email=email_clean,
         password_hash=get_password_hash(req.password),
         role=role_clean,
+<<<<<<< HEAD
         approval_status="pending" if role_clean == "teacher" else "approved",
     )
     db.add(new_user)
     db.flush()
+=======
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     # Create associated profile
     if role_clean == "student":
         profile = StudentProfile(
             student_id=new_user.id,
             department=req.department,
+<<<<<<< HEAD
             semester=study_class.academic_year if study_class else req.semester,
             college=study_class.curriculum if study_class else req.college,
             phone=req.phone,
             course=study_class.course if study_class else (req.course or "General"),
+=======
+            semester=req.semester,
+            college=req.college,
+            phone=req.phone,
+            course=req.course or "General",
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             stream=req.department or "Science/Technology",
             learning_interests=req.learning_interests or [],
         )
         db.add(profile)
+<<<<<<< HEAD
         if study_class:
             db.add(ClassEnrollment(class_id=study_class.id, student_id=new_user.id))
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         db.commit()
         db.refresh(new_user)
     else:
         teacher_prof = TeacherProfile(
             teacher_id=new_user.id,
+<<<<<<< HEAD
             department=subject,
             designation="Faculty Instructor",
             college=college,
             subject=subject,
             semester=semester,
+=======
+            department=req.department,
+            designation="Faculty Instructor",
+            college=req.college,
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         )
         db.add(teacher_prof)
         db.commit()
         db.refresh(new_user)
 
+<<<<<<< HEAD
         response.status_code = status.HTTP_202_ACCEPTED
         return TeacherRegistrationPendingResponse(
             id=new_user.id,
@@ -196,6 +249,8 @@ def register_user(
             message="Teacher request submitted. Dashboard access is available after admin approval.",
         )
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     # Issue JWT token
     token = create_access_token(data={
         "sub": str(new_user.id),
@@ -224,6 +279,7 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
             detail="Invalid email or password.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+<<<<<<< HEAD
     if user.role == "teacher" and user.approval_status != "approved":
         detail = (
             "Your teacher account request was not approved."
@@ -231,6 +287,8 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
             else "Your teacher account is awaiting admin approval."
         )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     token = create_access_token(data={
         "sub": str(user.id),

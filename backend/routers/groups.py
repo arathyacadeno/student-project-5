@@ -1,9 +1,16 @@
 import datetime
+<<<<<<< HEAD
 from typing import List, Dict, Optional, Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+=======
+from typing import List, Dict, Optional, Any
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 from database import get_db
 from models import (
@@ -12,12 +19,17 @@ from models import (
     TeachingPair,
     StudySchedule,
     Student,
+<<<<<<< HEAD
     StudentProfile,
     SkillProfile,
     Topic,
     StudyClass,
     ClassEnrollment,
     QuizAttempt,
+=======
+    SkillProfile,
+    Topic,
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 )
 from auth import get_current_user, require_teacher, require_student
 from ml.group_matcher import (
@@ -34,6 +46,7 @@ router = APIRouter()
 # ─────────────────────────────────────────────
 
 class ScheduleSlotCreate(BaseModel):
+<<<<<<< HEAD
     day_of_week: str = Field(..., min_length=3, max_length=20, example="Monday")
     start_time: str = Field(..., pattern=r"^\d{2}:\d{2}$", example="17:00")
     end_time: str = Field(..., pattern=r"^\d{2}:\d{2}$", example="19:00")
@@ -49,6 +62,11 @@ class ScheduleSlotCreate(BaseModel):
         if end <= start:
             raise ValueError("end_time must be later than start_time.")
         return self
+=======
+    day_of_week: str = Field(..., example="Monday")
+    start_time: str = Field(..., example="17:00")
+    end_time: str = Field(..., example="19:00")
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 class ScheduleSlotOut(BaseModel):
@@ -56,7 +74,10 @@ class ScheduleSlotOut(BaseModel):
     day_of_week: str
     start_time: str
     end_time: str
+<<<<<<< HEAD
     study_mode: str
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     is_available: bool
 
     class Config:
@@ -85,7 +106,10 @@ class GroupMemberSummary(BaseModel):
 class StudyGroupDetailOut(BaseModel):
     id: int
     name: str
+<<<<<<< HEAD
     class_id: Optional[int] = None
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     status: str
     member_count: int
     coverage_rate: float
@@ -94,11 +118,15 @@ class StudyGroupDetailOut(BaseModel):
     members: List[GroupMemberSummary]
     teaching_pairs: List[PeerTeachingItem]
     common_schedules: List[Dict[str, Any]] = []
+<<<<<<< HEAD
     progress_summary: Dict[str, Any] = Field(default_factory=dict)
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     created_at: datetime.datetime
 
 
 class GenerateGroupsRequest(BaseModel):
+<<<<<<< HEAD
     class_id: Optional[int] = None
     min_size: int = Field(3, ge=3, le=5)
     max_size: int = Field(5, ge=3, le=5)
@@ -164,6 +192,11 @@ def _group_progress_summary(db: Session, group: StudyGroup, member_ids: List[int
         "compared_topic_count": len(compared_keys),
         "follow_up_quiz_count": follow_up_quiz_count,
     }
+=======
+    min_size: Optional[int] = 3
+    max_size: Optional[int] = 5
+    reset_existing: Optional[bool] = True
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 # ─────────────────────────────────────────────
@@ -200,7 +233,10 @@ def add_study_schedule_slot(
         StudySchedule.student_id == current_user.id,
         StudySchedule.day_of_week == req.day_of_week,
         StudySchedule.start_time == req.start_time,
+<<<<<<< HEAD
         StudySchedule.study_mode == req.study_mode,
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     ).first()
     if existing:
         existing.end_time = req.end_time
@@ -214,7 +250,10 @@ def add_study_schedule_slot(
         day_of_week=req.day_of_week,
         start_time=req.start_time,
         end_time=req.end_time,
+<<<<<<< HEAD
         study_mode=req.study_mode,
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         is_available=True,
     )
     db.add(slot)
@@ -258,6 +297,7 @@ def generate_study_groups(
     Partitions students into balanced groups of 3 to 5 where weak topics are
     covered by strong members, persists to PostgreSQL, and computes peer teaching pairs.
     """
+<<<<<<< HEAD
     study_class = None
     if req.class_id is not None:
         study_class = db.query(StudyClass).filter(
@@ -368,19 +408,63 @@ def generate_study_groups(
                 StudyGroup.created_by == current_user.id,
             )
         old_groups = old_query.all()
+=======
+    # 1. Fetch all students with role='student'
+    students = db.query(Student).filter(Student.role == "student").all()
+    if len(students) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least 2 active students are required to form study groups.",
+        )
+
+    # 2. Build student skill profiles representation
+    student_payloads = []
+    for s in students:
+        skills = db.query(SkillProfile).filter(SkillProfile.student_id == s.id).all()
+        weak_topics = [sp.topic for sp in skills if sp.status == "weak"]
+        strong_topics = [sp.topic for sp in skills if sp.status == "strong"]
+        mastery = {sp.topic: sp.mastery_score for sp in skills}
+
+        student_payloads.append({
+            "id": s.id,
+            "name": s.name,
+            "weak_topics": weak_topics,
+            "strong_topics": strong_topics,
+            "mastery_scores": mastery,
+        })
+
+    # 3. Run Optimization Group Matching Algorithm
+    formed_groups = form_balanced_study_groups(
+        students=student_payloads,
+        min_size=req.min_size or 3,
+        max_size=req.max_size or 5,
+    )
+
+    if req.reset_existing:
+        # Clear existing auto-generated active groups
+        old_groups = db.query(StudyGroup).filter(StudyGroup.status == "active").all()
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         for og in old_groups:
             db.delete(og)
         db.commit()
 
+<<<<<<< HEAD
     # 3. Persist to PostgreSQL
+=======
+    # 4. Persist to PostgreSQL
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     results: List[StudyGroupDetailOut] = []
 
     for g_data in formed_groups:
         group_obj = StudyGroup(
             name=g_data["group_name"],
+<<<<<<< HEAD
             class_id=study_class.id if study_class else None,
             created_by=current_user.id,
             status="pending",
+=======
+            status="active",
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             created_at=datetime.datetime.utcnow(),
         )
         db.add(group_obj)
@@ -417,7 +501,11 @@ def generate_study_groups(
         for p in teaching_pairs_raw:
             # Find topic_id if exists
             topic_record = db.query(Topic).filter(Topic.name == p["topic_name"]).first()
+<<<<<<< HEAD
             topic_id = topic_record.id if topic_record else None
+=======
+            topic_id = topic_record.id if topic_record else 1
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
             tp_obj = TeachingPair(
                 group_id=group_obj.id,
@@ -450,12 +538,16 @@ def generate_study_groups(
                 StudySchedule.is_available == True
             ).all()
             schedules_by_member[sid] = [
+<<<<<<< HEAD
                 {
                     "day_of_week": sl.day_of_week,
                     "start_time": sl.start_time,
                     "end_time": sl.end_time,
                     "study_mode": sl.study_mode,
                 }
+=======
+                {"day_of_week": sl.day_of_week, "start_time": sl.start_time, "end_time": sl.end_time}
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 for sl in sched_slots
             ]
 
@@ -465,7 +557,10 @@ def generate_study_groups(
         results.append(StudyGroupDetailOut(
             id=group_obj.id,
             name=group_obj.name,
+<<<<<<< HEAD
             class_id=group_obj.class_id,
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             status=group_obj.status,
             member_count=len(members_summary),
             coverage_rate=cov_metrics["coverage_rate"],
@@ -474,13 +569,17 @@ def generate_study_groups(
             members=members_summary,
             teaching_pairs=teaching_pairs_out,
             common_schedules=common_times[:4], # top 4 sessions
+<<<<<<< HEAD
             progress_summary=_group_progress_summary(db, group_obj, member_ids),
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             created_at=group_obj.created_at,
         ))
 
     return results
 
 
+<<<<<<< HEAD
 @router.patch("/groups/{group_id}/review")
 def review_study_group(
     group_id: int,
@@ -506,6 +605,8 @@ def review_study_group(
     return {"id": group.id, "status": group.status}
 
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 # ─────────────────────────────────────────────
 # VIEW STUDY GROUPS
 # ─────────────────────────────────────────────
@@ -518,6 +619,7 @@ def list_study_groups(
     """
     List all active study groups with member profiles, coverage rates, and teaching pairs.
     """
+<<<<<<< HEAD
     query = db.query(StudyGroup)
     if current_user.role == "teacher":
         class_ids = db.query(StudyClass.id).filter(
@@ -535,6 +637,14 @@ def list_study_groups(
             StudyGroup.status == "active",
         )
     groups = query.order_by(StudyGroup.name).all()
+=======
+    groups = (
+        db.query(StudyGroup)
+        .filter(StudyGroup.status == "active")
+        .order_by(StudyGroup.name)
+        .all()
+    )
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     results: List[StudyGroupDetailOut] = []
 
     for g in groups:
@@ -589,12 +699,16 @@ def list_study_groups(
                 StudySchedule.is_available == True
             ).all()
             schedules_by_member[sid] = [
+<<<<<<< HEAD
                 {
                     "day_of_week": sl.day_of_week,
                     "start_time": sl.start_time,
                     "end_time": sl.end_time,
                     "study_mode": sl.study_mode,
                 }
+=======
+                {"day_of_week": sl.day_of_week, "start_time": sl.start_time, "end_time": sl.end_time}
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 for sl in sched_slots
             ]
         common_times = match_study_schedules(schedules_by_member, member_names)
@@ -602,7 +716,10 @@ def list_study_groups(
         results.append(StudyGroupDetailOut(
             id=g.id,
             name=g.name,
+<<<<<<< HEAD
             class_id=g.class_id,
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             status=g.status,
             member_count=len(members_summary),
             coverage_rate=round(cov_rate, 2),
@@ -611,7 +728,10 @@ def list_study_groups(
             members=members_summary,
             teaching_pairs=teaching_pairs_out,
             common_schedules=common_times[:4],
+<<<<<<< HEAD
             progress_summary=_group_progress_summary(db, g, member_ids),
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             created_at=g.created_at,
         ))
 

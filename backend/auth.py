@@ -5,11 +5,14 @@ from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+<<<<<<< HEAD
 import sys
 if sys.version_info >= (3, 13) and "crypt" not in sys.modules:
     import types
     sys.modules["crypt"] = types.ModuleType("crypt")
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from database import get_db
@@ -78,6 +81,7 @@ def require_student(current_user: Student = Depends(get_current_user)) -> Studen
 
 
 def require_teacher(current_user: Student = Depends(get_current_user)) -> Student:
+<<<<<<< HEAD
     if current_user.role not in {"teacher", "admin"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -96,5 +100,11 @@ def require_admin(current_user: Student = Depends(get_current_user)) -> Student:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access forbidden: Admin role required"
+=======
+    if current_user.role != "teacher":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: Teacher role required"
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         )
     return current_user

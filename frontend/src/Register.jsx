@@ -2,6 +2,7 @@ import { useState } from "react";
 import api from "./api";
 
 function Register({ onSwitchToLogin }) {
+<<<<<<< HEAD
   const [role, setRole] = useState("student");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -12,6 +13,11 @@ function Register({ onSwitchToLogin }) {
   const [curriculum, setCurriculum] = useState("");
   const [academicYear, setAcademicYear] = useState("");
   const [classCode, setClassCode] = useState("");
+=======
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,6 +28,7 @@ function Register({ onSwitchToLogin }) {
     setLoading(true);
 
     try {
+<<<<<<< HEAD
       const registration = {
         name: name.trim(),
         email: email.trim(),
@@ -52,6 +59,16 @@ function Register({ onSwitchToLogin }) {
           ? "Teacher request submitted. You can sign in to the dashboard after an administrator approves your account."
           : "Registration successful! You can now log in."
       );
+=======
+      await api.post("/register", {
+        name: name.trim(),
+        email: email.trim(),
+        password: password,
+      });
+
+      setSuccess(true);
+      setMessage("Registration successful! You can now log in.");
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     } catch (error) {
       setSuccess(false);
       setMessage(error.response?.data?.detail || "Registration failed. Try a different email.");
@@ -63,15 +80,22 @@ function Register({ onSwitchToLogin }) {
   return (
     <div className="auth-card">
       <div className="auth-brand-head">
+<<<<<<< HEAD
         <img className="auth-logo" src="/flint-logo.jpeg" alt="FLINT education logo" />
         <h1>FLINT</h1>
         <p className="auth-subtitle">
           {role === "teacher" ? "Request a teacher account" : "Create your student account"}
         </p>
+=======
+        <span className="auth-logo">🎓</span>
+        <h1>StudyMatch AI</h1>
+        <p className="auth-subtitle">Create your student account</p>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       </div>
 
       <form onSubmit={handleRegister} className="auth-form">
         <div className="form-field">
+<<<<<<< HEAD
           <label htmlFor="account-role">Account type</label>
           <select id="account-role" value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="student">Student</option>
@@ -84,6 +108,11 @@ function Register({ onSwitchToLogin }) {
           <input
             type="text"
             maxLength={100}
+=======
+          <label>Full Name</label>
+          <input
+            type="text"
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             placeholder="e.g. Alex Morgan"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -102,6 +131,7 @@ function Register({ onSwitchToLogin }) {
           />
         </div>
 
+<<<<<<< HEAD
         {role === "student" ? (
           <>
             <div className="form-field">
@@ -229,6 +259,8 @@ function Register({ onSwitchToLogin }) {
           </>
         )}
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         <div className="form-field">
           <label>Password (min 6 chars)</label>
           <input
@@ -242,11 +274,15 @@ function Register({ onSwitchToLogin }) {
         </div>
 
         <button type="submit" className="auth-submit-btn" disabled={loading}>
+<<<<<<< HEAD
           {loading
             ? "Submitting..."
             : role === "teacher"
               ? "Request Teacher Account →"
               : "Create Account →"}
+=======
+          {loading ? "Creating Account..." : "Create Account →"}
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         </button>
       </form>
 

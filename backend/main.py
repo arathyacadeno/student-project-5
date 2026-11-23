@@ -1,11 +1,17 @@
 import datetime
+<<<<<<< HEAD
 from typing import List, Optional, Dict, Any, Union
 from fastapi import FastAPI, Depends, HTTPException, Query, Response, status
+=======
+from typing import List, Optional, Dict, Any
+from fastapi import FastAPI, Depends, HTTPException, Query, status
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, desc
 
 from database import engine, Base, get_db
+<<<<<<< HEAD
 from academic_scope import normalize_academic_year
 from models import (
     Student, StudentProfile, TeacherProfile, SkillProfile, StudyMaterial, MaterialBookmark,
@@ -16,6 +22,15 @@ from models import (
 )
 from schemas import (
     StudentRegister, StudentLogin, StudentResponse, TeacherRegistrationPendingResponse, TokenResponse,
+=======
+from models import (
+    Student, StudentProfile, SkillProfile, StudyMaterial, MaterialBookmark,
+    QuestionBank, MockTest, MockTestResponse, PreviousPaper, PaperQuestion,
+    PaperAttempt, GuidanceCourse, InterestProfile, CourseSummary, MentorChatMessage
+)
+from schemas import (
+    StudentRegister, StudentLogin, StudentResponse, TokenResponse,
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     ProfileCreate, ProfileResponse,
     SkillProfileItem, SkillSummaryResponse,
     StudyMaterialCreate, StudyMaterialUpdate, StudyMaterialResponse, StudyMaterialListResponse, BookmarkToggleResponse,
@@ -34,7 +49,11 @@ from auth import (
 from ai_mentor import get_mentor_response
 
 # Core & Module routers
+<<<<<<< HEAD
 from routers import auth, academic, quiz, groups, revision, guidance, mock_tests_v2, chatbot, classes, admin
+=======
+from routers import auth, academic, quiz, groups, revision, guidance, mock_tests_v2, chatbot
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 # Initialize database schema if not present
 Base.metadata.create_all(bind=engine)
@@ -56,7 +75,10 @@ app.add_middleware(
 
 # Mount all modular routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Module 1 - Authentication"])
+<<<<<<< HEAD
 app.include_router(classes.router, prefix="/api/v1", tags=["Classes & Marks"])
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 app.include_router(academic.router, prefix="/api/v1", tags=["Module 3 - Subject & Topic Management"])
 app.include_router(quiz.router, prefix="/api/v1", tags=["Module 4 & 5 - Diagnostic Quiz & ML Prediction"])
 app.include_router(groups.router, prefix="/api/v1", tags=["Module 7, 8 & 9 - Intelligent Study Groups & Schedules"])
@@ -64,7 +86,10 @@ app.include_router(revision.router, prefix="/api/v1", tags=["Module 10 - AI Revi
 app.include_router(guidance.router, prefix="/api/v1/guidance", tags=["Module 4 - Higher Studies Guidance"])
 app.include_router(mock_tests_v2.router, prefix="/api/v1", tags=["Module 5 - Tests & Papers"])
 app.include_router(chatbot.router, prefix="/api/v1/chat", tags=["Module 6 - AI Chatbot"])
+<<<<<<< HEAD
 app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 # =====================================================================
@@ -81,6 +106,7 @@ def home():
     }
 
 
+<<<<<<< HEAD
 @app.post(
     "/register",
     response_model=Union[StudentResponse, TeacherRegistrationPendingResponse],
@@ -127,12 +153,18 @@ def register_student(
 
     email = str(payload.email).strip().lower()
     existing = db.query(Student).filter(func.lower(Student.email) == email).first()
+=======
+@app.post("/register", response_model=StudentResponse)
+def register_student(payload: StudentRegister, db: Session = Depends(get_db)):
+    existing = db.query(Student).filter(Student.email == payload.email).first()
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email is already registered"
         )
 
+<<<<<<< HEAD
     new_user = Student(
         name=payload.name.strip(),
         email=email,
@@ -164,11 +196,22 @@ def register_student(
             message="Teacher request submitted. Dashboard access is available after admin approval.",
         )
 
+=======
+    user_role = "student"
+    new_user = Student(
+        name=payload.name,
+        email=payload.email,
+        password_hash=get_password_hash(payload.password),
+        role=user_role
+    )
+    db.add(new_user)
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     db.commit()
     db.refresh(new_user)
 
     # Initialize default skill profiles if role is student
     if user_role == "student":
+<<<<<<< HEAD
         db.add(StudentProfile(
             student_id=new_user.id,
             course=study_class.course if study_class else (payload.course or "General"),
@@ -177,6 +220,8 @@ def register_student(
         ))
         if study_class:
             db.add(ClassEnrollment(class_id=study_class.id, student_id=new_user.id))
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         default_topics = [
             ("Biology", "Genetics & DNA"),
             ("Biology", "Cell Biology"),
@@ -204,13 +249,18 @@ def register_student(
 
 @app.post("/login", response_model=TokenResponse)
 def login_student(payload: StudentLogin, db: Session = Depends(get_db)):
+<<<<<<< HEAD
     email = str(payload.email).strip().lower()
     user = db.query(Student).filter(func.lower(Student.email) == email).first()
+=======
+    user = db.query(Student).filter(Student.email == payload.email).first()
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
+<<<<<<< HEAD
     if user.role == "teacher" and user.approval_status != "approved":
         detail = (
             "Your teacher account request was not approved."
@@ -218,6 +268,8 @@ def login_student(payload: StudentLogin, db: Session = Depends(get_db)):
             else "Your teacher account is awaiting admin approval."
         )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     access_token = create_access_token(data={"sub": str(user.id), "role": user.role})
     return TokenResponse(
@@ -247,10 +299,13 @@ def create_or_update_profile(
         existing_profile.stream = profile.stream
         existing_profile.academic_level = profile.academic_level
         existing_profile.learning_goal = profile.learning_goal
+<<<<<<< HEAD
         if profile.college is not None:
             existing_profile.college = profile.college
         if profile.semester is not None:
             existing_profile.semester = profile.semester
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         db.commit()
         db.refresh(existing_profile)
         return existing_profile
@@ -260,9 +315,13 @@ def create_or_update_profile(
         course=profile.course,
         stream=profile.stream,
         academic_level=profile.academic_level,
+<<<<<<< HEAD
         learning_goal=profile.learning_goal,
         college=profile.college,
         semester=profile.semester,
+=======
+        learning_goal=profile.learning_goal
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     )
     db.add(new_profile)
     db.commit()
@@ -344,6 +403,7 @@ def get_skill_summary(
 # 3. FEATURE 1: STUDY MATERIALS
 # =====================================================================
 
+<<<<<<< HEAD
 def _scope_materials_to_student(query, current_user: Student, db: Session):
     if current_user.role != "student":
         return query
@@ -375,6 +435,8 @@ def _scope_materials_to_student(query, current_user: Student, db: Session):
     )
 
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 @app.get("/materials", response_model=StudyMaterialListResponse)
 def list_study_materials(
     subject: Optional[str] = None,
@@ -387,7 +449,11 @@ def list_study_materials(
     current_user: Student = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+<<<<<<< HEAD
     query = _scope_materials_to_student(db.query(StudyMaterial), current_user, db)
+=======
+    query = db.query(StudyMaterial)
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     if subject and subject != "All":
         query = query.filter(StudyMaterial.subject == subject)
@@ -455,6 +521,7 @@ def list_study_materials(
     )
 
 
+<<<<<<< HEAD
 @app.get("/materials/subjects", response_model=List[str])
 def list_study_material_subjects(
     current_user: Student = Depends(get_current_user),
@@ -467,15 +534,21 @@ def list_study_material_subjects(
     ]
 
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 @app.get("/materials/{material_id}", response_model=StudyMaterialResponse)
 def get_study_material(
     material_id: int,
     current_user: Student = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+<<<<<<< HEAD
     material = _scope_materials_to_student(
         db.query(StudyMaterial), current_user, db
     ).filter(StudyMaterial.id == material_id).first()
+=======
+    material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     if not material:
         raise HTTPException(status_code=404, detail="Study material not found")
 
@@ -506,9 +579,12 @@ def create_study_material(
         title=payload.title,
         subject=payload.subject,
         topic=payload.topic,
+<<<<<<< HEAD
         course=payload.course.strip() if payload.course and payload.course.strip() else None,
         curriculum=payload.curriculum.strip() if payload.curriculum and payload.curriculum.strip() else None,
         academic_year=payload.academic_year.strip() if payload.academic_year and payload.academic_year.strip() else None,
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         material_type=payload.material_type,
         content=payload.content,
         summary=payload.summary,
@@ -1108,6 +1184,7 @@ def get_mock_test_history(
 # 7. FEATURE 5: COURSE SUMMARIES & RAPID REVISION
 # =====================================================================
 
+<<<<<<< HEAD
 def _student_summary_scope(db: Session, current_user: Student):
     if current_user.role != "student":
         return None
@@ -1156,10 +1233,17 @@ def list_course_summaries(
     subject: Optional[str] = None,
     current_user: Student = Depends(get_current_user),
     db: Session = Depends(get_db),
+=======
+@app.get("/summaries", response_model=List[CourseSummaryResponse])
+def list_course_summaries(
+    subject: Optional[str] = None,
+    db: Session = Depends(get_db)
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 ):
     query = db.query(CourseSummary)
     if subject and subject != "All":
         query = query.filter(CourseSummary.subject == subject)
+<<<<<<< HEAD
     scope = _student_summary_scope(db, current_user)
     query = _filter_summaries_to_scope(query, scope)
     summaries = query.all()
@@ -1169,13 +1253,20 @@ def list_course_summaries(
             if _summary_matches_student_scope(summary, scope)
         ]
     return [CourseSummaryResponse.model_validate(s) for s in summaries]
+=======
+    return [CourseSummaryResponse.model_validate(s) for s in query.all()]
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 @app.get("/summaries/{summary_id}", response_model=CourseSummaryResponse)
 def get_course_summary(
     summary_id: int,
+<<<<<<< HEAD
     current_user: Student = Depends(get_current_user),
     db: Session = Depends(get_db),
+=======
+    db: Session = Depends(get_db)
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 ):
     summary = db.query(CourseSummary).filter(CourseSummary.id == summary_id).first()
     if not summary:
@@ -1191,8 +1282,12 @@ def edit_course_summary(
     db: Session = Depends(get_db)
 ):
     summary = db.query(CourseSummary).filter(CourseSummary.id == summary_id).first()
+<<<<<<< HEAD
     scope = _student_summary_scope(db, current_user)
     if not summary or not _summary_matches_student_scope(summary, scope):
+=======
+    if not summary:
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         raise HTTPException(status_code=404, detail="Course summary not found")
 
     update_data = payload.model_dump(exclude_unset=True)
@@ -1217,8 +1312,12 @@ def submit_summary_quiz(
     db: Session = Depends(get_db)
 ):
     summary = db.query(CourseSummary).filter(CourseSummary.id == summary_id).first()
+<<<<<<< HEAD
     scope = _student_summary_scope(db, current_user)
     if not summary or not _summary_matches_student_scope(summary, scope):
+=======
+    if not summary:
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         raise HTTPException(status_code=404, detail="Course summary not found")
 
     quiz_questions = summary.quiz_questions or []
@@ -1430,6 +1529,7 @@ def submit_paper_attempt(
 
 @app.get("/teacher/dashboard", response_model=TeacherDashboardStats)
 def get_teacher_dashboard(
+<<<<<<< HEAD
     class_id: Optional[int] = None,
     current_teacher: Student = Depends(require_teacher),
     db: Session = Depends(get_db)
@@ -1487,6 +1587,18 @@ def get_teacher_dashboard(
 
     # Find class-wide weak topics
     all_skills = skills_query.all()
+=======
+    current_teacher: Student = Depends(require_teacher),
+    db: Session = Depends(get_db)
+):
+    total_students = db.query(Student).filter(Student.role == "student").count()
+    total_materials = db.query(StudyMaterial).count()
+    total_papers = db.query(PreviousPaper).count()
+    total_summaries = db.query(CourseSummary).count()
+
+    # Find class-wide weak topics
+    all_skills = db.query(SkillProfile).all()
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     topic_agg: Dict[tuple, Dict[str, Any]] = {}
     for s in all_skills:
         key = (s.subject, s.topic)
@@ -1498,6 +1610,7 @@ def get_teacher_dashboard(
 
     weak_topics_list = []
     for (subj, top), val in topic_agg.items():
+<<<<<<< HEAD
         linked_materials_query = db.query(StudyMaterial).filter(
             StudyMaterial.subject == subj,
             StudyMaterial.topic == top
@@ -1509,6 +1622,12 @@ def get_teacher_dashboard(
                 func.lower(func.trim(StudyMaterial.academic_year)) == study_class.academic_year.strip().lower(),
             )
         mat_count = linked_materials_query.count()
+=======
+        mat_count = db.query(StudyMaterial).filter(
+            StudyMaterial.subject == subj,
+            StudyMaterial.topic == top
+        ).count()
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         avg_score = round(sum(val["scores"]) / len(val["scores"]), 1) if val["scores"] else 0.0
         weak_topics_list.append(
             ClassWeakTopicItem(
@@ -1524,10 +1643,15 @@ def get_teacher_dashboard(
     weak_topics_list.sort(key=lambda x: (x.weak_students_count, -x.average_mastery), reverse=True)
 
     # Identify at-risk students (>= 2 weak topics)
+<<<<<<< HEAD
+=======
+    students = db.query(Student).filter(Student.role == "student").all()
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     at_risk = []
     for st in students:
         st_skills = db.query(SkillProfile).filter(SkillProfile.student_id == st.id).all()
         st_weak = [s.topic for s in st_skills if s.status == "weak"]
+<<<<<<< HEAD
         recent_attempts = db.query(QuizAttempt).filter(
             QuizAttempt.student_id == st.id
         ).order_by(QuizAttempt.created_at.desc()).limit(60).all()
@@ -1552,6 +1676,9 @@ def get_teacher_dashboard(
         if falling_topics:
             risk_reasons.append(f"Scores falling in: {', '.join(sorted(falling_topics))}")
         if risk_reasons:
+=======
+        if len(st_weak) >= 1: # Flag students with weak areas
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             avg_m = round(sum(s.mastery_score for s in st_skills) / len(st_skills), 1) if st_skills else 0.0
             at_risk.append(
                 AtRiskStudentItem(
@@ -1560,8 +1687,12 @@ def get_teacher_dashboard(
                     email=st.email,
                     weak_topics_count=len(st_weak),
                     weak_topics=st_weak,
+<<<<<<< HEAD
                     average_mastery=avg_m,
                     risk_reasons=risk_reasons,
+=======
+                    average_mastery=avg_m
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 )
             )
 

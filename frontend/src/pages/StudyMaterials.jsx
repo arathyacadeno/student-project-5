@@ -10,7 +10,10 @@ function StudyMaterials({ user }) {
   const initialSearch = searchParams.get("search") || "";
 
   const [materials, setMaterials] = useState([]);
+<<<<<<< HEAD
   const [materialSubjects, setMaterialSubjects] = useState([]);
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -29,11 +32,16 @@ function StudyMaterials({ user }) {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadFormData, setUploadFormData] = useState({
     title: "",
+<<<<<<< HEAD
     subject: "",
     topic: "",
     course: "",
     curriculum: "",
     academic_year: "",
+=======
+    subject: "Biology",
+    topic: "",
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     material_type: "notes",
     difficulty_level: "medium",
     summary: "",
@@ -65,6 +73,7 @@ function StudyMaterials({ user }) {
     }
   };
 
+<<<<<<< HEAD
   const fetchMaterialSubjects = async () => {
     try {
       const res = await api.get("/materials/subjects");
@@ -74,14 +83,19 @@ function StudyMaterials({ user }) {
     }
   };
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   useEffect(() => {
     fetchMaterials();
   }, [subject, materialType, bookmarkedOnly, page]);
 
+<<<<<<< HEAD
   useEffect(() => {
     fetchMaterialSubjects();
   }, []);
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setPage(1);
@@ -112,17 +126,26 @@ function StudyMaterials({ user }) {
       setShowUploadModal(false);
       setUploadFormData({
         title: "",
+<<<<<<< HEAD
         subject: "",
         topic: "",
         course: "",
         curriculum: "",
         academic_year: "",
+=======
+        subject: "Biology",
+        topic: "",
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         material_type: "notes",
         difficulty_level: "medium",
         summary: "",
         content: "",
       });
+<<<<<<< HEAD
       await Promise.all([fetchMaterials(), fetchMaterialSubjects()]);
+=======
+      fetchMaterials();
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     } catch (err) {
       alert(err.response?.data?.detail || "Failed to upload study material");
     } finally {
@@ -130,7 +153,11 @@ function StudyMaterials({ user }) {
     }
   };
 
+<<<<<<< HEAD
   const isTeacher = ["teacher", "admin"].includes(user?.role);
+=======
+  const isTeacher = user?.role === "teacher";
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   return (
     <div className="study-materials-page">
@@ -156,7 +183,11 @@ function StudyMaterials({ user }) {
       <div className="materials-filter-bar">
         {/* Subject Tabs */}
         <div className="subject-tabs">
+<<<<<<< HEAD
           {["All", ...materialSubjects].map((subj) => (
+=======
+          {["All", "Biology", "Mathematics", "Computer Science"].map((subj) => (
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             <button
               key={subj}
               className={`tab-btn ${subject === subj ? "active" : ""}`}
@@ -222,10 +253,15 @@ function StudyMaterials({ user }) {
       ) : materials.length === 0 ? (
         <EmptyState
           icon="📂"
+<<<<<<< HEAD
           title={user?.role === "student" ? "No course-matched materials yet" : "No materials match your filters"}
           message={user?.role === "student"
             ? "Materials are filtered by your registered course, institution, and year/semester. Ask your teacher to publish resources for your syllabus."
             : "Try adjusting your subject selection or clearing search keywords."}
+=======
+          title="No materials match your filters"
+          message="Try adjusting your subject selection or clearing search keywords."
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           actionText="Reset Filters"
           onAction={() => {
             setSubject("All");
@@ -378,12 +414,17 @@ function StudyMaterials({ user }) {
               <div className="form-row">
                 <div className="form-col">
                   <label>Subject *</label>
+<<<<<<< HEAD
                   <input
                     list="study-material-subject-options"
+=======
+                  <select
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                     value={uploadFormData.subject}
                     onChange={(e) =>
                       setUploadFormData({ ...uploadFormData, subject: e.target.value })
                     }
+<<<<<<< HEAD
                     placeholder="e.g. Applied Mathematics"
                     required
                   />
@@ -392,6 +433,13 @@ function StudyMaterials({ user }) {
                       <option key={subj} value={subj} />
                     ))}
                   </datalist>
+=======
+                  >
+                    <option value="Biology">Biology</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Computer Science">Computer Science</option>
+                  </select>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 </div>
                 <div className="form-col">
                   <label>Topic *</label>
@@ -409,6 +457,7 @@ function StudyMaterials({ user }) {
 
               <div className="form-row">
                 <div className="form-col">
+<<<<<<< HEAD
                   <label>Course / Program (exact registration value) *</label>
                   <input
                     type="text"
@@ -445,6 +494,8 @@ function StudyMaterials({ user }) {
 
               <div className="form-row">
                 <div className="form-col">
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   <label>Material Type *</label>
                   <select
                     value={uploadFormData.material_type}

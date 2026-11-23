@@ -14,6 +14,7 @@ function StudyGroups({ user }) {
   const [newDay, setNewDay] = useState("Monday");
   const [newStart, setNewStart] = useState("17:00");
   const [newEnd, setNewEnd] = useState("19:00");
+<<<<<<< HEAD
   const [newStudyMode, setNewStudyMode] = useState("online");
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [scheduleError, setScheduleError] = useState("");
@@ -24,6 +25,9 @@ function StudyGroups({ user }) {
   const [joiningClass, setJoiningClass] = useState(false);
   const [classJoinMessage, setClassJoinMessage] = useState("");
   const [classJoinError, setClassJoinError] = useState("");
+=======
+  const [savingSchedule, setSavingSchedule] = useState(false);
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   // Peer-teaching view filter: 'all' | 'tutors_for_me' | 'i_can_teach'
   const [teachingFilter, setTeachingFilter] = useState("all");
@@ -59,19 +63,28 @@ function StudyGroups({ user }) {
   const handleAddSchedule = async (e) => {
     e.preventDefault();
     setSavingSchedule(true);
+<<<<<<< HEAD
     setScheduleError("");
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     try {
       await api.post("/api/v1/schedules", {
         day_of_week: newDay,
         start_time: newStart,
         end_time: newEnd,
+<<<<<<< HEAD
         study_mode: newStudyMode,
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       });
       await fetchMySchedules();
       await fetchGroupData(); // refresh common slots
     } catch (err) {
       console.error("Error saving schedule:", err);
+<<<<<<< HEAD
       setScheduleError(err.response?.data?.detail || "Could not save your availability slot.");
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     } finally {
       setSavingSchedule(false);
     }
@@ -84,6 +97,7 @@ function StudyGroups({ user }) {
       await fetchGroupData();
     } catch (err) {
       console.error("Error deleting schedule:", err);
+<<<<<<< HEAD
       setScheduleError(err.response?.data?.detail || "Could not delete the availability slot.");
     }
   };
@@ -130,6 +144,8 @@ function StudyGroups({ user }) {
       setClassJoinError(typeof detail === "string" ? detail : "Could not join this class. Check the code and try again.");
     } finally {
       setJoiningClass(false);
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     }
   };
 
@@ -138,7 +154,11 @@ function StudyGroups({ user }) {
   }
 
   if (error) {
+<<<<<<< HEAD
     return <ErrorMessage error={error} onRetry={fetchGroupData} />;
+=======
+    return <ErrorMessage message={error} onRetry={fetchGroupData} />;
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   }
 
   if (!group) {
@@ -156,6 +176,7 @@ function StudyGroups({ user }) {
           actionText="Take a Topic Quiz"
           onAction={() => (window.location.href = "/quiz")}
         />
+<<<<<<< HEAD
         <section className="teacher-section-card student-class-join">
           <h3>Join your teacher's class</h3>
           <p>Enter the join code shared by your teacher to enroll in the correct course and semester.</p>
@@ -184,6 +205,8 @@ function StudyGroups({ user }) {
         >
           {requestingTeacher ? "Sending request..." : "Request teacher support or peer matching"}
         </button>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       </div>
     );
   }
@@ -200,11 +223,14 @@ function StudyGroups({ user }) {
   if (teachingFilter === "tutors_for_me") displayedPairs = tutorsForMe;
   if (teachingFilter === "i_can_teach") displayedPairs = iCanTeach;
 
+<<<<<<< HEAD
   const myMember = group.members.find((member) => member.student_id === user?.id);
   const myWeakTopics = myMember?.weak_topics || [];
   const topicsWithTutor = new Set(tutorsForMe.map((pair) => pair.topic_name));
   const topicsNeedingTeacher = myWeakTopics.filter((topic) => !topicsWithTutor.has(topic));
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   return (
     <div className="page-container compact-layout">
       {/* Page Header */}
@@ -261,6 +287,7 @@ function StudyGroups({ user }) {
         </div>
       </div>
 
+<<<<<<< HEAD
       {topicsNeedingTeacher.length > 0 && (
         <section className="teacher-section-card" style={{ marginBottom: "20px" }}>
           <h3>Need help with topics not covered by a peer?</h3>
@@ -280,6 +307,8 @@ function StudyGroups({ user }) {
         </section>
       )}
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       {/* Grid: Group Members Roster */}
       <section className="section-block">
         <h3 className="section-title">👥 Group Members Roster</h3>
@@ -447,7 +476,10 @@ function StudyGroups({ user }) {
                       <span className="session-hours">
                         {slot.start_time} - {slot.end_time}
                       </span>
+<<<<<<< HEAD
                       <span className="session-mode">{slot.study_mode}</span>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                     </div>
 
                     <div className="session-attendance">
@@ -472,7 +504,10 @@ function StudyGroups({ user }) {
           {/* Right: My Study Availability */}
           <div className="my-availability-panel">
             <h4>🗓️ My Weekly Availability</h4>
+<<<<<<< HEAD
             {scheduleError && <p className="auth-error-msg" role="alert">{scheduleError}</p>}
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             <form onSubmit={handleAddSchedule} className="add-schedule-form">
               <div className="schedule-form-row">
                 <select
@@ -505,6 +540,7 @@ function StudyGroups({ user }) {
                   required
                 />
 
+<<<<<<< HEAD
                 <select
                   value={newStudyMode}
                   onChange={(e) => setNewStudyMode(e.target.value)}
@@ -516,6 +552,8 @@ function StudyGroups({ user }) {
                   <option value="either">Either mode</option>
                 </select>
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 <button
                   type="submit"
                   className="action-btn-primary btn-sm"
@@ -531,7 +569,11 @@ function StudyGroups({ user }) {
                 mySchedules.map((s) => (
                   <div key={s.id} className="schedule-slot-chip">
                     <span>
+<<<<<<< HEAD
                       {s.day_of_week} ({s.start_time} - {s.end_time}) · {s.study_mode}
+=======
+                      {s.day_of_week} ({s.start_time} - {s.end_time})
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                     </span>
                     <button
                       className="delete-slot-btn"

@@ -86,7 +86,16 @@ function CourseGuidance() {
       setCourses(res.data);
     } catch (err) {
       console.error(err);
+<<<<<<< HEAD
       setCoursesError("Failed to load course recommendations.");
+=======
+      try {
+        const fallback = await api.get("/api/v1/guidance/courses");
+        setCourses(fallback.data.items || []);
+      } catch (e2) {
+        setCoursesError("Failed to load course recommendations.");
+      }
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     } finally {
       setCoursesLoading(false);
     }
@@ -184,6 +193,7 @@ function CourseGuidance() {
     }
   };
 
+<<<<<<< HEAD
   const trackGuidanceActivity = async (activityType, entityId) => {
     try {
       await api.post("/api/v1/guidance/activity", {
@@ -205,6 +215,8 @@ function CourseGuidance() {
     trackGuidanceActivity("exam", exam.id);
   };
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   useEffect(() => {
     fetchRecommendations();
   }, []);
@@ -502,7 +514,11 @@ function CourseGuidance() {
                     <div className="card-bottom-actions compact-actions">
                       <button
                         className="action-btn-secondary btn-xs"
+<<<<<<< HEAD
                         onClick={() => openCourseDetails(course)}
+=======
+                        onClick={() => setSelectedCourse(course)}
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                       >
                         Details
                       </button>
@@ -644,7 +660,11 @@ function CourseGuidance() {
                   <div className="exam-card-actions compact-actions">
                     <button
                       className="action-btn-secondary btn-xs"
+<<<<<<< HEAD
                       onClick={() => openExamDetails(exam)}
+=======
+                      onClick={() => setSelectedExam(exam)}
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                     >
                       Syllabus & Tips
                     </button>
@@ -986,9 +1006,12 @@ function CourseGuidance() {
                     <span className={`status-badge status-${req.status}`}>
                       {req.status.toUpperCase()}
                     </span>
+<<<<<<< HEAD
                     <span className="mode-badge">
                       {req.request_type === "study_support" ? "📚 Study support" : "🎓 Higher studies"}
                     </span>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                     <span className="mode-badge">📍 {req.preferred_mode}</span>
                     <span className="date-sub">
                       {new Date(req.created_at).toLocaleDateString()}

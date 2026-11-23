@@ -5,6 +5,7 @@ result analysis with topic-wise breakdown, adaptive test generation.
 After each attempt the SkillProfile is updated.
 """
 import datetime
+<<<<<<< HEAD
 import logging
 import os
 import uuid
@@ -23,10 +24,22 @@ from database import get_db
 from auth import get_current_user, require_teacher
 from models import (
     Student, StudentProfile, SkillProfile, QuestionPaper, Test, TestQuestion,
+=======
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
+
+from database import get_db
+from auth import get_current_user, require_teacher
+from models import (
+    Student, SkillProfile, QuestionPaper, Test, TestQuestion,
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     TestAttempt, AttemptAnswer, TestResult
 )
 
 router = APIRouter()
+<<<<<<< HEAD
 logger = logging.getLogger(__name__)
 MAX_PDF_BYTES = 20 * 1024 * 1024
 UPLOAD_ROOT = Path(
@@ -36,12 +49,15 @@ UPLOAD_ROOT = Path(
 
 class TestReviewRequest(BaseModel):
     decision: Literal["approve", "reject"]
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 # ─────────────────────────────────────────────
 # QUESTION PAPER LIBRARY
 # ─────────────────────────────────────────────
 
+<<<<<<< HEAD
 def _paper_matches_student_scope(paper: QuestionPaper, scope) -> bool:
     if scope is None:
         return True
@@ -81,6 +97,8 @@ def _paper_scope_values(course, curriculum, academic_year):
     return values
 
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 @router.get("/papers")
 def list_papers(
     exam: Optional[str] = None,
@@ -92,9 +110,13 @@ def list_papers(
     db: Session = Depends(get_db),
     current_user: Student = Depends(get_current_user)
 ):
+<<<<<<< HEAD
     q = db.query(QuestionPaper)
     if current_user.role not in {"teacher", "admin"}:
         q = q.filter(QuestionPaper.approval_status == "approved")
+=======
+    q = db.query(QuestionPaper).filter(QuestionPaper.approval_status == "approved")
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     if exam:
         q = q.filter(QuestionPaper.exam_name.ilike(f"%{exam}%"))
     if subject:
@@ -105,6 +127,7 @@ def list_papers(
         # topic_tags is a JSON list — do a text search
         q = q.filter(QuestionPaper.topic_tags.cast(db.bind.dialect.name == "postgresql" and
                      __import__("sqlalchemy").Text or __import__("sqlalchemy").Text).ilike(f"%{topic}%"))
+<<<<<<< HEAD
 
     scope = _student_test_scope(db, current_user)
     if scope is not None:
@@ -123,6 +146,8 @@ def list_papers(
             "items": [_paper_dict(paper) for paper in papers],
         }
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     total = q.count()
     papers = q.order_by(QuestionPaper.year.desc()).offset(skip).limit(limit).all()
     return {
@@ -138,9 +163,12 @@ def _paper_dict(p: QuestionPaper):
         "id": p.id,
         "exam_name": p.exam_name,
         "subject": p.subject,
+<<<<<<< HEAD
         "course": p.course,
         "curriculum": p.curriculum,
         "academic_year": p.academic_year,
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         "year": p.year,
         "title": p.title,
         "topic_tags": p.topic_tags,
@@ -159,6 +187,7 @@ def get_paper(
     paper = db.query(QuestionPaper).filter(QuestionPaper.id == paper_id).first()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
+<<<<<<< HEAD
     if current_user.role not in {"teacher", "admin"} and (
         paper.approval_status != "approved"
         or not _paper_matches_student_scope(
@@ -166,6 +195,8 @@ def get_paper(
         )
     ):
         raise HTTPException(status_code=404, detail="Paper not found")
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     return _paper_dict(paper)
 
 
@@ -176,6 +207,7 @@ def upload_paper(
     current_user: Student = Depends(require_teacher)
 ):
     """Teacher uploads question paper metadata."""
+<<<<<<< HEAD
     scope_values = _paper_scope_values(
         payload.get("course"),
         payload.get("curriculum"),
@@ -188,6 +220,11 @@ def upload_paper(
         course=scope_values[0] or None,
         curriculum=scope_values[1] or None,
         academic_year=scope_values[2] or None,
+=======
+    paper = QuestionPaper(
+        exam_name=payload.get("exam_name", ""),
+        subject=payload.get("subject", ""),
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         year=payload.get("year", datetime.datetime.utcnow().year),
         title=payload.get("title", ""),
         topic_tags=payload.get("topic_tags", []),
@@ -202,6 +239,7 @@ def upload_paper(
     return {"id": paper.id, "message": "Paper submitted for approval"}
 
 
+<<<<<<< HEAD
 async def _store_pdf(upload: UploadFile, stored_name: str) -> str:
     if Path(upload.filename or "").suffix.lower() != ".pdf":
         raise HTTPException(status_code=415, detail="Upload a PDF file.")
@@ -329,6 +367,8 @@ def download_paper_file(
     )
 
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 @router.patch("/papers/{paper_id}/approve")
 def approve_paper(
     paper_id: int,
@@ -348,6 +388,7 @@ def approve_paper(
 # TESTS (Teacher CRUD)
 # ─────────────────────────────────────────────
 
+<<<<<<< HEAD
 def _student_test_scope(db: Session, current_user: Student):
     if current_user.role != "student":
         return None
@@ -391,6 +432,8 @@ def _filter_tests_to_scope(query, scope):
     )
 
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 @router.get("/tests")
 def list_tests(
     subject: Optional[str] = None,
@@ -399,6 +442,7 @@ def list_tests(
     db: Session = Depends(get_db),
     current_user: Student = Depends(get_current_user)
 ):
+<<<<<<< HEAD
     q = db.query(Test)
     if current_user.role not in {"teacher", "admin"}:
         q = q.filter(Test.is_published.is_(True), Test.approval_status == "approved")
@@ -417,6 +461,11 @@ def list_tests(
             "items": [_test_dict(test) for test in tests],
         }
 
+=======
+    q = db.query(Test).filter(Test.is_published == True)
+    if subject:
+        q = q.filter(Test.subject.ilike(f"%{subject}%"))
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     total = q.count()
     tests = q.order_by(Test.created_at.desc()).offset(skip).limit(limit).all()
     return {
@@ -430,15 +479,21 @@ def _test_dict(t: Test):
         "id": t.id,
         "title": t.title,
         "subject": t.subject,
+<<<<<<< HEAD
         "course": t.course,
         "curriculum": t.curriculum,
         "academic_year": t.academic_year,
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         "exam_name": t.exam_name,
         "duration_minutes": t.duration_minutes,
         "total_marks": t.total_marks,
         "is_adaptive": t.is_adaptive,
+<<<<<<< HEAD
         "is_published": t.is_published,
         "approval_status": t.approval_status,
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         "question_count": len(t.questions),
     }
 
@@ -451,6 +506,7 @@ def create_test(
 ):
     """
     payload: {
+<<<<<<< HEAD
       title, subject, course, curriculum, academic_year, exam_name,
       duration_minutes, total_marks, is_adaptive,
       questions: [ {question_text, question_type, options, correct_answer, explanation, topic, difficulty, marks} ]
@@ -472,12 +528,25 @@ def create_test(
         course=scope_values[0] or None,
         curriculum=scope_values[1] or None,
         academic_year=scope_values[2] or None,
+=======
+      title, subject, exam_name, duration_minutes, total_marks, is_adaptive,
+      questions: [ {question_text, question_type, options, correct_answer, explanation, topic, difficulty, marks} ]
+    }
+    """
+    test = Test(
+        title=payload.get("title", "New Test"),
+        subject=payload.get("subject", ""),
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         exam_name=payload.get("exam_name"),
         duration_minutes=payload.get("duration_minutes", 30),
         total_marks=payload.get("total_marks", 20),
         is_adaptive=payload.get("is_adaptive", False),
+<<<<<<< HEAD
         is_published=False,
         approval_status="pending",
+=======
+        is_published=payload.get("is_published", True),
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         created_by=current_user.id,
     )
     db.add(test)
@@ -502,6 +571,7 @@ def create_test(
     return {"id": test.id, "message": "Test created"}
 
 
+<<<<<<< HEAD
 @router.patch("/tests/{test_id}/review")
 def review_test(
     test_id: int,
@@ -521,6 +591,8 @@ def review_test(
     return {"id": test.id, "approval_status": test.approval_status}
 
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 @router.get("/tests/{test_id}")
 def get_test(
     test_id: int,
@@ -530,6 +602,7 @@ def get_test(
     test = db.query(Test).filter(Test.id == test_id).first()
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
+<<<<<<< HEAD
     if not _test_matches_student_scope(
         test, _student_test_scope(db, current_user)
     ):
@@ -538,6 +611,8 @@ def get_test(
         not test.is_published or test.approval_status != "approved"
     ):
         raise HTTPException(status_code=404, detail="Test not found")
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     questions = []
     for q in test.questions:
         questions.append({
@@ -566,6 +641,7 @@ def start_test_attempt(
     db: Session = Depends(get_db),
     current_user: Student = Depends(get_current_user)
 ):
+<<<<<<< HEAD
     test = db.query(Test).filter(
         Test.id == test_id,
         Test.is_published.is_(True),
@@ -577,6 +653,11 @@ def start_test_attempt(
         test, _student_test_scope(db, current_user)
     ):
         raise HTTPException(status_code=404, detail="Test not found")
+=======
+    test = db.query(Test).filter(Test.id == test_id, Test.is_published == True).first()
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     attempt = TestAttempt(
         test_id=test_id,
@@ -857,6 +938,7 @@ def generate_adaptive_test(
     weak_topics = [s.topic for s in weak_skills]
 
     # Find published tests that match subject
+<<<<<<< HEAD
     test_query = db.query(Test).filter(
         Test.subject.ilike(f"%{subject}%"),
         Test.is_published.is_(True),
@@ -868,6 +950,12 @@ def generate_adaptive_test(
         test for test in test_query.all()
         if _test_matches_student_scope(test, scope)
     ]
+=======
+    matching_tests = db.query(Test).filter(
+        Test.subject.ilike(f"%{subject}%"),
+        Test.is_published == True,
+    ).all()
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
     if not matching_tests:
         raise HTTPException(

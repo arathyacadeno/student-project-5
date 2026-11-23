@@ -9,11 +9,14 @@ class StudentRegister(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
     role: Optional[str] = "student" # 'student' or 'teacher'
+<<<<<<< HEAD
     course: Optional[str] = Field(None, max_length=100)
     subject: Optional[str] = Field(None, max_length=100)
     college: Optional[str] = Field(None, max_length=150)
     semester: Optional[str] = Field(None, max_length=20)
     class_code: Optional[str] = Field(None, max_length=16)
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 class StudentLogin(BaseModel):
@@ -30,6 +33,7 @@ class StudentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+<<<<<<< HEAD
 class TeacherRegistrationPendingResponse(BaseModel):
     id: int
     name: str
@@ -39,6 +43,8 @@ class TeacherRegistrationPendingResponse(BaseModel):
     message: str
 
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -54,6 +60,7 @@ class ProfileCreate(BaseModel):
     stream: str
     academic_level: str
     learning_goal: str
+<<<<<<< HEAD
     college: Optional[str] = None
     semester: Optional[str] = None
 
@@ -68,6 +75,12 @@ class ProfileResponse(BaseModel):
     college: Optional[str] = None
     semester: Optional[str] = None
 
+=======
+
+
+class ProfileResponse(ProfileCreate):
+    id: int
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -100,9 +113,12 @@ class StudyMaterialBase(BaseModel):
     title: str = Field(..., min_length=3, max_length=200)
     subject: str
     topic: str
+<<<<<<< HEAD
     course: Optional[str] = Field(None, max_length=100)
     curriculum: Optional[str] = Field(None, max_length=150)
     academic_year: Optional[str] = Field(None, max_length=20)
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     material_type: str # 'notes', 'learning_material', 'important_questions', 'topic_resource'
     content: str
     summary: Optional[str] = None
@@ -117,9 +133,12 @@ class StudyMaterialUpdate(BaseModel):
     title: Optional[str] = None
     subject: Optional[str] = None
     topic: Optional[str] = None
+<<<<<<< HEAD
     course: Optional[str] = Field(None, max_length=100)
     curriculum: Optional[str] = Field(None, max_length=150)
     academic_year: Optional[str] = Field(None, max_length=20)
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     material_type: Optional[str] = None
     content: Optional[str] = None
     summary: Optional[str] = None
@@ -293,9 +312,12 @@ class QuizQuestionItem(BaseModel):
 class CourseSummaryResponse(BaseModel):
     id: int
     subject: str
+<<<<<<< HEAD
     course: Optional[str] = None
     curriculum: Optional[str] = None
     academic_year: Optional[str] = None
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     topic: str
     title: str
     overview: str
@@ -423,7 +445,10 @@ class AtRiskStudentItem(BaseModel):
     weak_topics_count: int
     weak_topics: List[str]
     average_mastery: float
+<<<<<<< HEAD
     risk_reasons: List[str] = Field(default_factory=list)
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
 
 class TeacherDashboardStats(BaseModel):

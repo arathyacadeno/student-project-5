@@ -18,7 +18,11 @@ import {
 
 function MockTests({ user }) {
   const navigate = useNavigate();
+<<<<<<< HEAD
   const isTeacher = ["teacher", "admin"].includes(user?.role);
+=======
+  const isTeacher = user?.role === "teacher";
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   // Mode: 'browse' | 'running' | 'result'
   const [viewMode, setViewMode] = useState("browse");
@@ -46,18 +50,26 @@ function MockTests({ user }) {
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   // Adaptive Test Generator State
+<<<<<<< HEAD
   const [adaptiveSubject, setAdaptiveSubject] = useState("");
+=======
+  const [adaptiveSubject, setAdaptiveSubject] = useState("Biology");
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   const [adaptiveLoading, setAdaptiveLoading] = useState(false);
   const [studentWeakTopics, setStudentWeakTopics] = useState([]);
 
   // Teacher Create Test Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
+<<<<<<< HEAD
   const [createSubject, setCreateSubject] = useState("");
   const [createCourse, setCreateCourse] = useState("");
   const [createCurriculum, setCreateCurriculum] = useState("");
   const [createAcademicYear, setCreateAcademicYear] = useState("");
   const [createExamName, setCreateExamName] = useState("");
+=======
+  const [createSubject, setCreateSubject] = useState("Biology");
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   const [createDuration, setCreateDuration] = useState(25);
   const [createTotalMarks, setCreateTotalMarks] = useState(15);
   const [createQuestions, setCreateQuestions] = useState([
@@ -74,6 +86,7 @@ function MockTests({ user }) {
   ]);
   const [savingTest, setSavingTest] = useState(false);
 
+<<<<<<< HEAD
   const testSubjects = [...new Set(tests.map((test) => test.subject).filter(Boolean))];
   const visibleTests = selectedSubjectFilter === "All"
     ? tests
@@ -82,6 +95,8 @@ function MockTests({ user }) {
     testSubjects.includes(topic.subject)
   );
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   // ─────────────────────────────────────────────
   // Fetch Functions
   // ─────────────────────────────────────────────
@@ -89,7 +104,12 @@ function MockTests({ user }) {
   const fetchTests = async () => {
     setTestsLoading(true);
     try {
+<<<<<<< HEAD
       const res = await api.get("/api/v1/tests");
+=======
+      const subjectParam = selectedSubjectFilter !== "All" ? `?subject=${selectedSubjectFilter}` : "";
+      const res = await api.get(`/api/v1/tests${subjectParam}`);
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       setTests(res.data.items || []);
     } catch (err) {
       console.error("Error fetching tests:", err);
@@ -121,10 +141,15 @@ function MockTests({ user }) {
   }, []);
 
   useEffect(() => {
+<<<<<<< HEAD
     if (testSubjects.length && !testSubjects.includes(adaptiveSubject)) {
       setAdaptiveSubject(testSubjects[0]);
     }
   }, [tests, adaptiveSubject]);
+=======
+    fetchTests();
+  }, [selectedSubjectFilter]);
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
   // ─────────────────────────────────────────────
   // Test Attempt Flow
@@ -277,16 +302,20 @@ function MockTests({ user }) {
       await api.post("/api/v1/tests", {
         title: createTitle,
         subject: createSubject,
+<<<<<<< HEAD
         course: createCourse.trim() || null,
         curriculum: createCurriculum.trim() || null,
         academic_year: createAcademicYear.trim() || null,
         exam_name: createExamName || null,
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         duration_minutes: Number(createDuration),
         total_marks: Number(createTotalMarks),
         questions: createQuestions,
       });
       setShowCreateModal(false);
       setCreateTitle("");
+<<<<<<< HEAD
       setCreateSubject("");
       setCreateCourse("");
       setCreateCurriculum("");
@@ -294,6 +323,10 @@ function MockTests({ user }) {
       setCreateExamName("");
       fetchTests();
       alert("Mock test submitted for teacher review before it is published.");
+=======
+      fetchTests();
+      alert("New mock test created and published for students!");
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
     } catch (err) {
       console.error("Failed to create test:", err);
       alert("Failed to create test. Please check all question inputs.");
@@ -302,6 +335,7 @@ function MockTests({ user }) {
     }
   };
 
+<<<<<<< HEAD
   const handleReviewTest = async (testId, decision) => {
     if (decision === "reject" && !window.confirm("Reject this mock test?")) return;
     try {
@@ -313,6 +347,8 @@ function MockTests({ user }) {
     }
   };
 
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
   // ─────────────────────────────────────────────
   // RENDER: Running Test
   // ─────────────────────────────────────────────
@@ -631,7 +667,11 @@ function MockTests({ user }) {
                   <XAxis dataKey="topic" />
                   <YAxis domain={[0, 100]} />
                   <Tooltip formatter={(value) => [`${value}%`, "Accuracy"]} />
+<<<<<<< HEAD
                   <Bar dataKey="accuracy" fill="#00A99D" radius={[4, 4, 0, 0]} />
+=======
+                  <Bar dataKey="accuracy" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -773,7 +813,11 @@ function MockTests({ user }) {
           className={`guidance-tab-btn ${browseTab === "tests" ? "active" : ""}`}
           onClick={() => setBrowseTab("tests")}
         >
+<<<<<<< HEAD
           {isTeacher ? "📋 Tests & Review Queue" : "📋 Published Mock Tests"}
+=======
+          📋 Published Mock Tests
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         </button>
         <button
           className={`guidance-tab-btn ${browseTab === "adaptive" ? "active" : ""}`}
@@ -796,7 +840,11 @@ function MockTests({ user }) {
         <div>
           {/* Subject Filter */}
           <div className="stream-filter-pills" style={{ marginBottom: "20px" }}>
+<<<<<<< HEAD
             {["All", ...testSubjects].map((subj) => (
+=======
+            {["All", "Biology", "Mathematics", "Computer Science"].map((subj) => (
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               <button
                 key={subj}
                 className={`filter-pill ${selectedSubjectFilter === subj ? "active" : ""}`}
@@ -809,6 +857,7 @@ function MockTests({ user }) {
 
           {testsLoading ? (
             <LoadingSpinner message="Loading mock tests library..." />
+<<<<<<< HEAD
           ) : visibleTests.length === 0 ? (
             <EmptyState
               icon="📝"
@@ -818,10 +867,22 @@ function MockTests({ user }) {
           ) : (
             <div className="courses-grid">
               {visibleTests.map((test) => (
+=======
+          ) : tests.length === 0 ? (
+            <EmptyState
+              icon="📝"
+              title="No tests found"
+              message="Check back soon or generate an adaptive practice test."
+            />
+          ) : (
+            <div className="courses-grid">
+              {tests.map((test) => (
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 <div key={test.id} className="course-card-enhanced">
                   <div className="course-card-header">
                     <span className="stream-pill">{test.subject}</span>
                     <span className="degree-tag">{test.exam_name || "Diagnostic"}</span>
+<<<<<<< HEAD
                     {test.academic_year && (
                       <span className="degree-tag">{test.academic_year}</span>
                     )}
@@ -830,6 +891,8 @@ function MockTests({ user }) {
                         {test.approval_status}
                       </span>
                     )}
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   </div>
 
                   <h3 className="course-card-title">{test.title}</h3>
@@ -841,6 +904,7 @@ function MockTests({ user }) {
                   </div>
 
                   <div className="card-bottom-actions">
+<<<<<<< HEAD
                     {isTeacher && test.approval_status === "pending" ? (
                       <>
                         <button
@@ -867,6 +931,15 @@ function MockTests({ user }) {
                     ) : (
                       <span className="subtext">This test is not published.</span>
                     )}
+=======
+                    <button
+                      className="action-btn-primary"
+                      style={{ width: "100%" }}
+                      onClick={() => startTest(test.id)}
+                    >
+                      Start Timed Test ⏱️
+                    </button>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   </div>
                 </div>
               ))}
@@ -894,8 +967,13 @@ function MockTests({ user }) {
           <div style={{ margin: "20px 0" }}>
             <h4>Your Current Weak Topics:</h4>
             <div className="pills-wrap" style={{ marginTop: "8px" }}>
+<<<<<<< HEAD
               {relevantWeakTopics.length > 0 ? (
                 relevantWeakTopics.map((w, i) => (
+=======
+              {studentWeakTopics.length > 0 ? (
+                studentWeakTopics.map((w, i) => (
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                   <span key={i} className="danger-topic-pill">
                     ⚠️ {w.subject}: {w.topic} (Mastery: {w.mastery_score}%)
                   </span>
@@ -913,16 +991,26 @@ function MockTests({ user }) {
               onChange={(e) => setAdaptiveSubject(e.target.value)}
               className="search-input"
             >
+<<<<<<< HEAD
               {testSubjects.map((subject) => (
                 <option key={subject} value={subject}>{subject}</option>
               ))}
+=======
+              <option value="Biology">Biology</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Computer Science">Computer Science</option>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
             </select>
           </div>
 
           <button
             className="action-btn-primary"
             onClick={startAdaptiveTest}
+<<<<<<< HEAD
             disabled={adaptiveLoading || !testSubjects.length}
+=======
+            disabled={adaptiveLoading}
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           >
             {adaptiveLoading ? "Assembling Adaptive Drill..." : `Launch Adaptive ${adaptiveSubject} Test →`}
           </button>
@@ -950,7 +1038,11 @@ function MockTests({ user }) {
                         <XAxis dataKey="name" />
                         <YAxis domain={[0, 100]} />
                         <Tooltip formatter={(value) => [`${value}%`, "Accuracy"]} />
+<<<<<<< HEAD
                         <Line type="monotone" dataKey="pct" stroke="#00A99D" strokeWidth={3} dot={{ r: 5 }} />
+=======
+                        <Line type="monotone" dataKey="pct" stroke="#4f46e5" strokeWidth={3} dot={{ r: 5 }} />
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -1004,7 +1096,11 @@ function MockTests({ user }) {
         <div className="modal-backdrop">
           <div className="modal-dialog modal-xl">
             <div className="modal-header">
+<<<<<<< HEAD
               <h3>+ Create Mock Test for Teacher Review</h3>
+=======
+              <h3>+ Create & Publish New Mock Test</h3>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
               <button className="modal-close" onClick={() => setShowCreateModal(false)}>
                 &times;
               </button>
@@ -1025,6 +1121,7 @@ function MockTests({ user }) {
                 </div>
                 <div>
                   <label>Subject:</label>
+<<<<<<< HEAD
                   <input
                     type="text"
                     placeholder="e.g. Programming in C"
@@ -1082,6 +1179,18 @@ function MockTests({ user }) {
                     className="search-input"
                     style={{ width: "100%", marginTop: "4px" }}
                   />
+=======
+                  <select
+                    value={createSubject}
+                    onChange={(e) => setCreateSubject(e.target.value)}
+                    className="search-input"
+                    style={{ width: "100%", marginTop: "4px" }}
+                  >
+                    <option value="Biology">Biology</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Computer Science">Computer Science</option>
+                  </select>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 </div>
                 <div>
                   <label>Duration (Minutes):</label>
@@ -1107,9 +1216,12 @@ function MockTests({ user }) {
                   />
                 </div>
               </div>
+<<<<<<< HEAD
               <p className="subtext">
                 To show this test only to a matching student group, fill in all three course-scope fields.
               </p>
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 
               <h4>Test Questions ({createQuestions.length})</h4>
               {createQuestions.map((q, qIndex) => (

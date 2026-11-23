@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+<<<<<<< HEAD
 import { Link } from "react-router-dom";
+=======
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
 import api from "../api";
 
 function ChatWidget({ user }) {
@@ -51,7 +54,11 @@ function ChatWidget({ user }) {
           {
             id: 1,
             sender: "bot",
+<<<<<<< HEAD
             message: `Hello ${user?.name || "Student"}! 👋 I am your FLINT Assistant. Ask me anything about syllabus topics, entrance exams, courses, colleges, or your skill profile!`,
+=======
+            message: `Hello ${user?.name || "Student"}! 👋 I am your StudyMatch Assistant. Ask me anything about syllabus topics, entrance exams, courses, colleges, or your skill profile!`,
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           },
         ]);
       }
@@ -70,7 +77,11 @@ function ChatWidget({ user }) {
           {
             id: 1,
             sender: "bot",
+<<<<<<< HEAD
             message: `Hello ${user?.name || "Student"}! 👋 I am your FLINT Assistant. How can I help you today?`,
+=======
+            message: `Hello ${user?.name || "Student"}! 👋 I am your StudyMatch Assistant. How can I help you today?`,
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
           },
         ]);
       }
@@ -136,12 +147,19 @@ function ChatWidget({ user }) {
       <button
         className="floating-chat-trigger"
         onClick={() => setIsOpen(!isOpen)}
+<<<<<<< HEAD
         aria-label="Open FLINT Assistant"
       >
         <span className="trigger-icon" aria-hidden="true">
           {isOpen ? "✕" : <img src="/flint-chatbot-icon.png" alt="" />}
         </span>
         <span className="trigger-label">{isOpen ? "Close Assistant" : "FLINT Assistant"}</span>
+=======
+        aria-label="Open AI StudyMatch Assistant"
+      >
+        <span className="trigger-icon">{isOpen ? "✕" : "🤖"}</span>
+        <span className="trigger-label">{isOpen ? "Close Assistant" : "StudyMatch AI"}</span>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
       </button>
 
       {/* Floating Drawer / Pop-up */}
@@ -150,11 +168,17 @@ function ChatWidget({ user }) {
           {/* Header */}
           <div className="chat-window-header">
             <div className="chat-title-group">
+<<<<<<< HEAD
               <span className="chat-avatar">
                 <img src="/flint-chatbot-icon.png" alt="" />
               </span>
               <div>
                 <h4>FLINT Assistant</h4>
+=======
+              <span className="chat-avatar">🤖</span>
+              <div>
+                <h4>StudyMatch Assistant</h4>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                 <span className="chat-online-indicator">● RAG Academic Engine Active</span>
               </div>
             </div>
@@ -182,7 +206,11 @@ function ChatWidget({ user }) {
                       <strong>📚 Verified Sources:</strong>
                       {m.sources.map((src, i) => (
                         <div key={i} className="source-mini-tag">
+<<<<<<< HEAD
                           📄 {src.link ? <Link to={src.link}>{src.title}</Link> : src.title}
+=======
+                          📄 {src.title}
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
                         </div>
                       ))}
                     </div>

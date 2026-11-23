@@ -36,7 +36,11 @@ function Dashboard({ student, onLogout }) {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
+<<<<<<< HEAD
         <h1>FLINT</h1>
+=======
+        <h1>StudyMatch AI</h1>
+>>>>>>> c5b52f8b434c693f78a0a874b4f4b7f77bd0c366
         <button onClick={onLogout}>Logout</button>
       </header>
 
