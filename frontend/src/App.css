@@ -1105,6 +1105,286 @@ body {
 }
 
 /* ==========================================================================
+   Modern Split-Screen Login Page (#EAF7F5 bg, #08616B primary)
+   ========================================================================== */
+
+.login-split-card {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  max-width: 960px;
+  min-height: 520px;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 16px 40px rgba(8, 97, 107, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  margin: auto;
+  align-items: stretch;
+}
+
+/* Left Section – 45% Width */
+.login-left-section {
+  flex: 0 0 45%;
+  width: 45%;
+  max-width: 45%;
+  padding: 44px 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.login-brand-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.login-flint-logo {
+  width: 95px;
+  height: 95px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 6px;
+}
+
+.login-brand-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #08616B;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.login-brand-subtitle {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 400;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.login-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.login-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  letter-spacing: 0.2px;
+}
+
+.login-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.login-input-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.login-input-icon.left {
+  left: 14px;
+}
+
+.login-text-input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  background-color: #F1F7F9;
+  border: 1px solid #dbe7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.login-text-input.has-right-icon {
+  padding-right: 42px;
+}
+
+.login-text-input:focus {
+  background-color: #ffffff;
+  border-color: #08616B;
+  box-shadow: 0 0 0 3px rgba(8, 97, 107, 0.15);
+}
+
+.login-text-input::placeholder {
+  color: #94a3b8;
+  font-size: 13.5px;
+}
+
+.login-password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+
+.login-password-toggle-btn:hover {
+  color: #08616B;
+}
+
+.login-error-alert {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.login-submit-button {
+  width: 100%;
+  background: #08616B;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(8, 97, 107, 0.25);
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.login-submit-button:hover:not(:disabled) {
+  background: #064e56;
+  box-shadow: 0 6px 16px rgba(8, 97, 107, 0.35);
+  transform: translateY(-1px);
+}
+
+.login-submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.login-divider-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  gap: 12px;
+  width: 100%;
+}
+
+.login-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.login-footer-text {
+  font-size: 13px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.login-register-link-btn {
+  background: none;
+  border: none;
+  color: #08616B;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.login-register-link-btn:hover {
+  text-decoration: underline;
+  color: #064e56;
+}
+
+/* Right Section – 55% Width */
+.login-right-section {
+  flex: 0 0 55%;
+  width: 55%;
+  max-width: 55%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.login-illustration-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-illustration-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 860px) {
+  .login-split-card {
+    flex-direction: column;
+    max-width: 440px;
+    min-height: auto;
+    border-radius: 20px;
+  }
+
+  .login-left-section {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+    padding: 32px 24px;
+  }
+
+  .login-right-section {
+    display: none;
+  }
+}
+
+/* ==========================================================================
    Student Dashboard Styles
    ========================================================================== */
 
