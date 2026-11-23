@@ -19,6 +19,7 @@ function StudentDashboard({ user }) {
   const [summary, setSummary] = useState(null);
   const [profile, setProfile] = useState(null);
   const [materials, setMaterials] = useState([]);
+  const [activeSubject, setActiveSubject] = useState("All");
   const [recommendedCourses, setRecommendedCourses] = useState([]);
   const [myGroup, setMyGroup] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +37,7 @@ function StudentDashboard({ user }) {
       const [sumRes, profRes, matRes] = await Promise.all([
         api.get("/skill-profile/summary"),
         api.get("/profile/me"),
-        api.get("/materials?limit=4"),
+        api.get("/materials?limit=12"),
       ]);
       setSummary(sumRes.data);
       setProfile(profRes.data);
@@ -61,14 +62,14 @@ function StudentDashboard({ user }) {
     }
   };
 
-  const handleGenerateRevisionNotes = async (topicName) => {
+  const handleGenerateRevisionNotes = async (topicName, subjectName = "General Curriculum") => {
     setShowRevisionModal(true);
     setLoadingRevision(true);
     setRevisionNotes(null);
     try {
       const res = await api.post("/api/v1/revision/generate", {
         topic_name: topicName,
-        subject_name: "General Curriculum",
+        subject_name: subjectName,
       });
       setRevisionNotes(res.data);
     } catch (err) {
@@ -101,6 +102,14 @@ function StudentDashboard({ user }) {
   const materialScopeLabel = [profile?.course, profile?.college, profile?.semester]
     .filter(Boolean)
     .join(" · ");
+
+  const enrolledSubjects = [
+    "All",
+    ...Array.from(new Set(materials.map((m) => m.subject).filter(Boolean))),
+  ];
+  const filteredMaterials = materials.filter(
+    (m) => activeSubject === "All" || m.subject === activeSubject
+  );
 
   return (
     <div className="dashboard-page">
@@ -397,55 +406,247 @@ function StudentDashboard({ user }) {
         </section>
       </div>
 
-      {/* Recommended Materials Section */}
+      {/* Enrolled Course Study Materials Section */}
       <section className="dashboard-materials-preview">
         <div className="section-head-row">
           <div>
-            <h3>Materials Matched to Your Course</h3>
+            <h3>📚 Study Materials: {profile?.course || "Your Enrolled Course"}</h3>
             <span className="card-subtext">
               {hasCompleteMaterialScope
-                ? `For ${materialScopeLabel}; weak-topic resources are prioritized.`
-                : "Complete your course, institution, and year/semester in your profile to see matching materials."}
+                ? `Scoped to ${materialScopeLabel} — weak topics prioritized for revision.`
+                : profile?.course
+                ? `Course-aligned syllabus resources for ${profile.course}`
+                : "Complete your course and institution profile to find matching materials."}
             </span>
           </div>
           <button
             className="view-all-link"
             onClick={() => navigate(hasCompleteMaterialScope ? "/materials" : "/profile")}
           >
-            {hasCompleteMaterialScope ? "Browse Course Materials →" : "Complete Profile →"}
+            {hasCompleteMaterialScope ? "Browse All Course Materials →" : "Complete Profile →"}
           </button>
         </div>
 
-        {materials.length ? (
+        {/* Enrolled Course Quick Actions Toolbar */}
+        <div
+          className="course-study-toolbar"
+          style={{
+            background: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            borderRadius: "10px",
+            padding: "12px 16px",
+            margin: "12px 0 16px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "10px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "12.5px", fontWeight: "700", color: "#0f172a" }}>
+              🎯 Course Study Tools:
+            </span>
+            <button
+              style={{
+                padding: "5px 12px",
+                fontSize: "12px",
+                borderRadius: "16px",
+                border: "1px solid #cbd5e1",
+                background: "white",
+                cursor: "pointer",
+                color: "#1e293b",
+                fontWeight: "600",
+              }}
+              onClick={() => navigate("/materials")}
+            >
+              📖 All Course Notes
+            </button>
+            <button
+              style={{
+                padding: "5px 12px",
+                fontSize: "12px",
+                borderRadius: "16px",
+                border: "1px solid #cbd5e1",
+                background: "white",
+                cursor: "pointer",
+                color: "#1e293b",
+                fontWeight: "600",
+              }}
+              onClick={() => navigate("/summaries")}
+            >
+              📑 Rapid Revision Summaries
+            </button>
+            <button
+              style={{
+                padding: "5px 12px",
+                fontSize: "12px",
+                borderRadius: "16px",
+                border: "1px solid #cbd5e1",
+                background: "white",
+                cursor: "pointer",
+                color: "#1e293b",
+                fontWeight: "600",
+              }}
+              onClick={() => navigate("/papers")}
+            >
+              📄 Solved Question Papers
+            </button>
+            <button
+              style={{
+                padding: "5px 12px",
+                fontSize: "12px",
+                borderRadius: "16px",
+                border: "1px solid #cbd5e1",
+                background: "white",
+                cursor: "pointer",
+                color: "#1e293b",
+                fontWeight: "600",
+              }}
+              onClick={() => navigate("/mock-tests")}
+            >
+              📝 Adaptive Mock Test
+            </button>
+          </div>
+
+          {enrolledSubjects.length > 2 && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                Filter Subject:
+              </span>
+              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                {enrolledSubjects.map((s) => (
+                  <button
+                    key={s}
+                    style={{
+                      padding: "3px 9px",
+                      fontSize: "11px",
+                      borderRadius: "12px",
+                      border: "1px solid",
+                      borderColor: activeSubject === s ? "var(--primary)" : "#cbd5e1",
+                      background: activeSubject === s ? "var(--primary)" : "white",
+                      color: activeSubject === s ? "white" : "#334155",
+                      cursor: "pointer",
+                      fontWeight: activeSubject === s ? "700" : "500",
+                    }}
+                    onClick={() => setActiveSubject(s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {filteredMaterials.length ? (
           <div className="materials-preview-grid">
-            {materials.map((mat) => (
-              <div key={mat.id} className="preview-mat-card">
+            {filteredMaterials.map((mat) => (
+              <div
+                key={mat.id}
+                className="preview-mat-card"
+                style={
+                  mat.is_weak_topic
+                    ? {
+                        borderColor: "#fca5a5",
+                        boxShadow: "0 2px 8px rgba(239, 68, 68, 0.12)",
+                      }
+                    : {}
+                }
+              >
                 <div className="card-top-badges">
                   <span className="subject-badge">{mat.subject}</span>
+                  <span
+                    style={{
+                      fontSize: "10.5px",
+                      background: "#f1f5f9",
+                      padding: "2px 7px",
+                      borderRadius: "4px",
+                      color: "#475569",
+                      textTransform: "capitalize",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {mat.material_type?.replace("_", " ")}
+                  </span>
                   {mat.is_weak_topic && (
-                    <span className="weak-priority-badge">⚠️ Weak Topic</span>
+                    <span className="weak-priority-badge">⚠️ Weak Topic Focus</span>
                   )}
                 </div>
                 <h4>{mat.title}</h4>
                 <p className="mat-summary-preview">{mat.summary}</p>
-                <div className="card-footer-action">
-                  <span className="topic-tag">📌 {mat.topic}</span>
-                  <button
-                    className="read-btn-sm"
-                    onClick={() => navigate(`/materials?search=${encodeURIComponent(mat.title)}`)}
-                  >
-                    Read →
-                  </button>
+                <div
+                  className="card-footer-action"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginTop: "12px",
+                  }}
+                >
+                  <span className="topic-tag" style={{ fontSize: "11px", color: "#64748b" }}>
+                    📌 {mat.topic}
+                  </span>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button
+                      className="read-btn-sm"
+                      style={{ fontSize: "11px", padding: "4px 8px" }}
+                      onClick={() => handleGenerateRevisionNotes(mat.topic, mat.subject)}
+                      title="Generate instant AI Revision Notes for this topic"
+                    >
+                      🚀 AI Notes
+                    </button>
+                    <button
+                      className="read-btn-sm"
+                      style={{ fontSize: "11px", padding: "4px 8px" }}
+                      onClick={() =>
+                        navigate(`/materials?search=${encodeURIComponent(mat.title)}`)
+                      }
+                    >
+                      Read →
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="no-data-msg">
-            {hasCompleteMaterialScope
-              ? "No study materials have been published for your enrolled course yet."
-              : "Add your course, institution, and year/semester to your profile to find matching materials."}
-          </p>
+          <div
+            style={{
+              padding: "24px",
+              background: "#f8fafc",
+              borderRadius: "10px",
+              textAlign: "center",
+              border: "1px dashed #cbd5e1",
+            }}
+          >
+            <p style={{ margin: "0 0 12px", color: "#475569", fontSize: "13.5px" }}>
+              {hasCompleteMaterialScope
+                ? `No study materials published yet under ${materialScopeLabel}.`
+                : "Set your enrolled course and college in your profile to view matching course materials."}
+            </p>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                className="action-btn-primary btn-sm"
+                onClick={() => navigate("/materials")}
+              >
+                Browse All Study Materials
+              </button>
+              <button
+                className="action-btn-secondary btn-sm"
+                onClick={() => navigate("/summaries")}
+              >
+                Open Course Summaries
+              </button>
+            </div>
+          </div>
         )}
       </section>
 
