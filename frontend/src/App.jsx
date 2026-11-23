@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import TeacherManagement from "./pages/TeacherManagement";
+import Home from "./pages/Home";
 import Login from "./Login";
 import Register from "./Register";
 import Layout from "./components/Layout";
@@ -46,6 +47,12 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public Homepage Route */}
+        <Route
+          path="/"
+          element={<Home user={user} onLogout={handleLogout} />}
+        />
+
         {/* Public Auth Routes */}
         <Route
           path="/login"

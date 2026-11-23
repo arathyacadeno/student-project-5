@@ -1363,6 +1363,134 @@ body {
   display: block;
 }
 
+/* Registration Extensions for Split-Screen Layout */
+.login-split-card.register-split-card {
+  max-width: 1000px;
+  min-height: 580px;
+  max-height: 94vh;
+}
+
+.login-left-section.register-left-section {
+  padding: 34px 34px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  justify-content: flex-start;
+}
+
+.login-left-section.register-left-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.login-left-section.register-left-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.login-left-section.register-left-section::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+.register-role-toggle {
+  display: flex;
+  background: #F1F7F9;
+  border: 1px solid #dbe7eb;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.register-role-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.register-role-btn:hover:not(.active) {
+  color: #08616B;
+}
+
+.register-role-btn.active {
+  background: #08616B;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(8, 97, 107, 0.25);
+}
+
+.register-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.login-text-select {
+  width: 100%;
+  padding: 12px 34px 12px 42px;
+  background-color: #F1F7F9;
+  border: 1px solid #dbe7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.login-text-select:focus {
+  background-color: #ffffff;
+  border-color: #08616B;
+  box-shadow: 0 0 0 3px rgba(8, 97, 107, 0.15);
+}
+
+.register-success-alert {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.register-goto-login-btn {
+  background: #08616B;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.15s ease;
+}
+
+.register-goto-login-btn:hover {
+  background: #064e56;
+}
+
 /* Responsive adjustments */
 @media (max-width: 860px) {
   .login-split-card {
@@ -1372,6 +1500,10 @@ body {
     border-radius: 20px;
   }
 
+  .login-split-card.register-split-card {
+    max-height: none;
+  }
+
   .login-left-section {
     flex: 1 1 100%;
     width: 100%;
@@ -1379,8 +1511,19 @@ body {
     padding: 32px 24px;
   }
 
+  .login-left-section.register-left-section {
+    max-height: none;
+    overflow-y: visible;
+  }
+
   .login-right-section {
     display: none;
+  }
+}
+
+@media (max-width: 540px) {
+  .register-row-2col {
+    grid-template-columns: 1fr;
   }
 }
 
