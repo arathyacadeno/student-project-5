@@ -1,0 +1,759 @@
+"""
+HTTP-level tests: real requests through FastAPI (routing, JWT dependency,
+role guards, validation). Run from the backend folder:  pytest test_http.py -v
+Needs:  python -m pip install pytest httpx
+"""
+import uuid
+import pytest
+from fastapi.testclient import TestClient
+
+from main import app
+from database import SessionLocal
+from models import ClassEnrollment, Course, Student, StudentProfile, TeacherProfile, StudyClass
+from auth import get_password_hash
+
+API = "/api/v1"
+PASSWORD = "TestPass123!"
+client = TestClient(app)
+
+
+def _email(prefix):
+    return f"{prefix}_{uuid.uuid4().hex[:8]}@httptest.com"
+
+
+def _auth(token):
+    return {"Authorization": f"Bearer {token}"}
+
+
+def _login(email, password=PASSWORD):
+    return client.post(f"{API}/auth/login", json={"email": email, "password": password})
+
+
+def _delete_user(email):
+    db = SessionLocal()
+    try:
+        user = db.query(Student).filter(Student.email == email).first()
+        if user:
+            db.query(StudentProfile).filter(StudentProfile.student_id == user.id).delete()
+            db.query(TeacherProfile).filter(TeacherProfile.teacher_id == user.id).delete()
+            db.delete(user)
+            db.commit()
+    finally:
+        db.close()
+
+
+@pytest.fixture
+def student():
+    email = _email("student")
+    res = client.post(f"{API}/auth/register", json={
+        "name": "HTTP Student", "email": email, "password": PASSWORD,
+        "department": "CSE", "semester": "5", "college": "Test College",
+    })
+    assert res.status_code == 201, res.text
+    yield {"email": email, "token": res.json()["access_token"]}
+    _delete_user(email)
+
+
+@pytest.fixture
+def teacher():
+    """Teachers are created directly in the DB, as sign-up must not grant this role."""
+    email = _email("teacher")
+    db = SessionLocal()
+    try:
+        user = Student(name="HTTP Teacher", email=email,
+                       password_hash=get_password_hash(PASSWORD), role="teacher")
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        db.add(TeacherProfile(teacher_id=user.id, department="CSE",
+                              designation="Faculty Instructor", college="Test College"))
+        db.commit()
+    finally:
+        db.close()
+    token = _login(email).json()["access_token"]
+    yield {"email": email, "token": token}
+    _delete_user(email)
+
+
+@pytest.fixture
+def admin():
+    email = _email("admin")
+    db = SessionLocal()
+    try:
+        db.add(Student(name="HTTP Admin", email=email,
+                       password_hash=get_password_hash(PASSWORD), role="admin"))
+        db.commit()
+    finally:
+        db.close()
+    token = _login(email).json()["access_token"]
+    yield {"email": email, "token": token}
+    _delete_user(email)
+
+
+# ---------- Registration ----------
+
+def test_register_returns_201_and_token(student):
+    assert student["token"]
+
+
+def test_register_duplicate_email_rejected(student):
+    res = client.post(f"{API}/auth/register", json={
+        "name": "Dup", "email": student["email"], "password": PASSWORD})
+    assert res.status_code == 400
+
+
+def test_register_invalid_email_returns_422():
+    res = client.post(f"{API}/auth/register", json={
+        "name": "Bad", "email": "not-an-email", "password": PASSWORD})
+    assert res.status_code == 422
+
+
+def test_register_missing_fields_returns_422():
+    assert client.post(f"{API}/auth/register", json={"email": _email("x")}).status_code == 422
+
+
+def test_legacy_register_saves_selected_course():
+    email = _email("course")
+    try:
+        res = client.post("/register", json={
+            "name": "Course Student", "email": email, "password": PASSWORD,
+            "course": "B.Tech / B.E.", "college": "Test Institute",
+            "semester": "Year 2",
+        })
+        assert res.status_code == 200, res.text
+
+        db = SessionLocal()
+        try:
+            student = db.query(Student).filter(Student.email == email).first()
+            profile = db.query(StudentProfile).filter(
+                StudentProfile.student_id == student.id
+            ).first()
+            assert profile.course == "B.Tech / B.E."
+            assert profile.college == "Test Institute"
+            assert profile.semester == "Year 2"
+        finally:
+            db.close()
+    finally:
+        _delete_user(email)
+
+
+def test_student_can_request_teacher_study_support(student):
+    res = client.post(
+        f"{API}/guidance/counselling",
+        headers=_auth(student["token"]),
+        json={
+            "request_type": "study_support",
+            "message": "Please help with weak topics.",
+            "preferred_mode": "Online",
+        },
+    )
+    assert res.status_code == 201
+    requests = client.get(
+        f"{API}/guidance/counselling", headers=_auth(student["token"])
+    )
+    assert requests.status_code == 200
+    assert requests.json()[0]["request_type"] == "study_support"
+
+
+def test_non_admin_cannot_access_admin_overview(student):
+    response = client.get(
+        f"{API}/admin/overview", headers=_auth(student["token"])
+    )
+    assert response.status_code == 403
+    teacher_dashboard = client.get(
+        "/teacher/dashboard", headers=_auth(student["token"])
+    )
+    assert teacher_dashboard.status_code == 403
+
+
+def test_admin_can_create_teacher_and_manage_global_classes(admin):
+    teacher_email = _email("provisioned_teacher")
+    class_id = None
+    try:
+        teacher_response = client.post(
+            f"{API}/admin/teachers",
+            headers=_auth(admin["token"]),
+            json={
+                "name": "Provisioned Teacher",
+                "email": teacher_email,
+                "password": PASSWORD,
+                "subject": "Computer Science",
+                "college": "Test College",
+                "semester": "Semester 5",
+            },
+        )
+        assert teacher_response.status_code == 201, teacher_response.text
+        teacher = teacher_response.json()
+        assert teacher["role"] == "teacher"
+
+        class_response = client.post(
+            f"{API}/admin/classes",
+            headers=_auth(admin["token"]),
+            json={
+                "name": "Admin Managed Class",
+                "course": "Test Course",
+                "curriculum": "Test Institute",
+                "academic_year": "Semester 1",
+                "teacher_id": teacher["id"],
+            },
+        )
+        assert class_response.status_code == 201, class_response.text
+        class_id = class_response.json()["id"]
+
+        classes_response = client.get(
+            f"{API}/admin/classes?include_inactive=true",
+            headers=_auth(admin["token"]),
+        )
+        assert classes_response.status_code == 200
+        assert any(item["id"] == class_id for item in classes_response.json())
+
+        dashboard_response = client.get(
+            f"/teacher/dashboard?class_id={class_id}",
+            headers=_auth(admin["token"]),
+        )
+        assert dashboard_response.status_code == 200, dashboard_response.text
+        assert dashboard_response.json()["total_students"] == 0
+
+        update_response = client.patch(
+            f"{API}/admin/classes/{class_id}",
+            headers=_auth(admin["token"]),
+            json={"is_active": False},
+        )
+        assert update_response.status_code == 200
+        assert update_response.json()["is_active"] is False
+    finally:
+        if class_id is not None:
+            db = SessionLocal()
+            try:
+                db.query(StudyClass).filter(StudyClass.id == class_id).delete()
+                db.commit()
+            finally:
+                db.close()
+        _delete_user(teacher_email)
+
+
+def test_admin_can_delete_student_account(admin, student):
+    db = SessionLocal()
+    try:
+        user = db.query(Student).filter(Student.email == student["email"]).first()
+        user_id = user.id
+    finally:
+        db.close()
+
+    response = client.delete(
+        f"{API}/admin/users/{user_id}", headers=_auth(admin["token"])
+    )
+    assert response.status_code == 204, response.text
+
+    db = SessionLocal()
+    try:
+        assert db.query(Student).filter(Student.id == user_id).first() is None
+    finally:
+        db.close()
+    assert _login(student["email"]).status_code == 401
+
+
+def test_admin_deleting_teacher_removes_owned_classes_and_enrollments(admin, teacher, student):
+    teacher_db = SessionLocal()
+    try:
+        teacher_user = teacher_db.query(Student).filter(Student.email == teacher["email"]).first()
+        teacher_id = teacher_user.id
+        student_user = teacher_db.query(Student).filter(Student.email == student["email"]).first()
+        student_id = student_user.id
+    finally:
+        teacher_db.close()
+
+    class_response = client.post(
+        f"{API}/admin/classes",
+        headers=_auth(admin["token"]),
+        json={
+            "name": "Deletion Cascade Class",
+            "course": "Test Course",
+            "curriculum": "Test Institute",
+            "academic_year": "Semester 1",
+            "teacher_id": teacher_id,
+        },
+    )
+    assert class_response.status_code == 201, class_response.text
+    class_id = class_response.json()["id"]
+
+    db = SessionLocal()
+    try:
+        db.add(ClassEnrollment(class_id=class_id, student_id=student_id))
+        db.commit()
+    finally:
+        db.close()
+
+    response = client.delete(
+        f"{API}/admin/users/{teacher_id}", headers=_auth(admin["token"])
+    )
+    assert response.status_code == 204, response.text
+
+    db = SessionLocal()
+    try:
+        assert db.query(Student).filter(Student.id == teacher_id).first() is None
+        assert db.query(StudyClass).filter(StudyClass.id == class_id).first() is None
+        assert db.query(ClassEnrollment).filter(ClassEnrollment.class_id == class_id).count() == 0
+        assert db.query(Student).filter(Student.id == student_id).first() is not None
+    finally:
+        db.close()
+
+
+def test_admin_cannot_delete_admin_account(admin):
+    db = SessionLocal()
+    try:
+        admin_user = db.query(Student).filter(Student.email == admin["email"]).first()
+        admin_id = admin_user.id
+    finally:
+        db.close()
+
+    response = client.delete(
+        f"{API}/admin/users/{admin_id}", headers=_auth(admin["token"])
+    )
+    assert response.status_code == 409
+
+
+def test_non_admin_cannot_delete_account(student):
+    db = SessionLocal()
+    try:
+        user = db.query(Student).filter(Student.email == student["email"]).first()
+        user_id = user.id
+    finally:
+        db.close()
+
+    response = client.delete(
+        f"{API}/admin/users/{user_id}", headers=_auth(student["token"])
+    )
+    assert response.status_code == 403
+
+
+def test_ba_student_recommendations_only_include_eligible_postgraduate_courses(student):
+    suffix = uuid.uuid4().hex[:8]
+    eligible_humanities = Course(
+        title=f"M.A. Test Humanities {suffix}",
+        stream="Humanities",
+        degree_level="Postgraduate",
+        duration_years=2,
+        eligibility="Bachelor's degree in Humanities, Arts, or Social Sciences.",
+        exams=[],
+        fee_range="Varies",
+        skills_needed=[],
+        job_roles=[],
+        salary_range="Varies",
+        scope="Test course",
+        top_colleges=[],
+    )
+    eligible_any_bachelor = Course(
+        title=f"MBA Test Any Bachelor's {suffix}",
+        stream="Management",
+        degree_level="Postgraduate",
+        duration_years=2,
+        eligibility="Any bachelor's degree.",
+        exams=[],
+        fee_range="Varies",
+        skills_needed=[],
+        job_roles=[],
+        salary_range="Varies",
+        scope="Test course",
+        top_colleges=[],
+    )
+    ineligible_stem = Course(
+        title=f"M.Sc Test STEM {suffix}",
+        stream="Science",
+        degree_level="Postgraduate",
+        duration_years=2,
+        eligibility="B.Sc or B.Tech in a STEM field.",
+        exams=[],
+        fee_range="Varies",
+        skills_needed=[],
+        job_roles=[],
+        salary_range="Varies",
+        scope="Test course",
+        top_colleges=[],
+    )
+    undergraduate = Course(
+        title=f"B.Tech Test Undergraduate {suffix}",
+        stream="Engineering",
+        degree_level="Undergraduate",
+        duration_years=4,
+        eligibility="10+2 with Physics and Mathematics.",
+        exams=[],
+        fee_range="Varies",
+        skills_needed=[],
+        job_roles=[],
+        salary_range="Varies",
+        scope="Test course",
+        top_colleges=[],
+    )
+
+    course_ids = []
+    db = SessionLocal()
+    try:
+        user = db.query(Student).filter(Student.email == student["email"]).first()
+        profile = db.query(StudentProfile).filter(StudentProfile.student_id == user.id).first()
+        profile.course = "B.A."
+        db.add_all([eligible_humanities, eligible_any_bachelor, ineligible_stem, undergraduate])
+        db.commit()
+        course_ids = [
+            eligible_humanities.id,
+            eligible_any_bachelor.id,
+            ineligible_stem.id,
+            undergraduate.id,
+        ]
+    finally:
+        db.close()
+
+    try:
+        response = client.get(
+            f"{API}/guidance/courses/recommend", headers=_auth(student["token"])
+        )
+        assert response.status_code == 200, response.text
+        recommendations = response.json()
+        recommended_ids = {course["id"] for course in recommendations}
+        assert course_ids[0] in recommended_ids
+        assert course_ids[1] in recommended_ids
+        assert course_ids[2] not in recommended_ids
+        assert course_ids[3] not in recommended_ids
+        assert all(
+            course["degree_level"].casefold().startswith("postgraduate")
+            for course in recommendations
+        )
+        assert all("B.A." in course["match_reason"] for course in recommendations)
+    finally:
+        db = SessionLocal()
+        try:
+            db.query(Course).filter(Course.id.in_(course_ids)).delete(synchronize_session=False)
+            db.commit()
+        finally:
+            db.close()
+
+
+def test_mbbs_student_recommendations_only_include_medical_postgraduate_courses(student):
+    db = SessionLocal()
+    try:
+        user = db.query(Student).filter(Student.email == student["email"]).first()
+        profile = db.query(StudentProfile).filter(StudentProfile.student_id == user.id).first()
+        profile.course = "MBBS"
+        db.commit()
+    finally:
+        db.close()
+
+    response = client.get(
+        f"{API}/guidance/courses/recommend", headers=_auth(student["token"])
+    )
+    assert response.status_code == 200, response.text
+    recommendations = response.json()
+    assert len(recommendations) > 0
+
+    # Ensure no undergraduate courses are recommended
+    for course in recommendations:
+        assert course["degree_level"].casefold().startswith("postgraduate"), f"Expected PG course but got {course['title']} ({course['degree_level']})"
+        assert "b.tech" not in course["title"].casefold()
+        assert course["title"].casefold() != "mbbs"
+
+    # Top recommendations should be MD, MS, DNB, or MPH
+    titles = [c["title"] for c in recommendations]
+    assert any("MD" in t for t in titles)
+    assert any("MS" in t for t in titles)
+
+
+def test_student_only_sees_study_materials_for_exact_course_scope(student, teacher):
+    profile = client.put(
+        f"{API}/auth/profile",
+        headers=_auth(student["token"]),
+        json={
+            "course": "Diploma",
+            "college": "Polytechnic College Kannur",
+            "semester": "3rd Semester",
+        },
+    )
+    assert profile.status_code == 200, profile.text
+
+    created_ids = []
+    try:
+        for suffix, course, curriculum, academic_year in [
+            ("matching", "Diploma", "Polytechnic College Kannur", "3rd Semester"),
+            ("other-course", "B.Tech / B.E.", "Polytechnic College Kannur", "3rd Semester"),
+            ("unscoped", None, None, None),
+        ]:
+            response = client.post(
+                "/materials",
+                headers=_auth(teacher["token"]),
+                json={
+                    "title": f"Scoped material {suffix} {uuid.uuid4().hex[:6]}",
+                    "subject": "Materials Scope Test",
+                    "topic": "Materials Scope",
+                    "course": course,
+                    "curriculum": curriculum,
+                    "academic_year": academic_year,
+                    "material_type": "notes",
+                    "content": "Course-scoped test material.",
+                },
+            )
+            assert response.status_code == 200, response.text
+            created_ids.append(response.json()["id"])
+
+        materials = client.get("/materials", headers=_auth(student["token"]))
+        assert materials.status_code == 200, materials.text
+        visible_ids = {item["id"] for item in materials.json()["items"]}
+        assert created_ids[0] in visible_ids
+        assert created_ids[1] not in visible_ids
+        assert created_ids[2] not in visible_ids
+        assert client.get(
+            f"/materials/{created_ids[1]}", headers=_auth(student["token"])
+        ).status_code == 404
+        assert client.get(
+            f"/materials/{created_ids[2]}", headers=_auth(student["token"])
+        ).status_code == 404
+    finally:
+        for material_id in created_ids:
+            client.delete(
+                f"/materials/{material_id}", headers=_auth(teacher["token"])
+            )
+
+
+def test_teacher_signup_requires_admin_approval(admin):
+    email = _email("teacher_request")
+    try:
+        request = client.post(f"{API}/auth/register", json={
+            "name": "Teacher Applicant",
+            "email": email,
+            "password": PASSWORD,
+            "role": "teacher",
+            "subject": "Mathematics",
+            "college": "Test College",
+            "semester": "Semester 3",
+        })
+        assert request.status_code == 202, request.text
+        teacher_request = request.json()
+        assert teacher_request["role"] == "teacher"
+        assert teacher_request["approval_status"] == "pending"
+        assert "access_token" not in teacher_request
+
+        login = client.post(f"{API}/auth/login", json={
+            "email": email, "password": PASSWORD,
+        })
+        assert login.status_code == 403
+        assert "awaiting admin approval" in login.json()["detail"]
+
+        pending = client.get(
+            f"{API}/admin/teacher-requests", headers=_auth(admin["token"])
+        )
+        assert pending.status_code == 200
+        request_details = next(item for item in pending.json() if item["id"] == teacher_request["id"])
+        assert request_details["subject"] == "Mathematics"
+        assert request_details["college"] == "Test College"
+
+        approval = client.patch(
+            f"{API}/admin/teacher-requests/{teacher_request['id']}",
+            headers=_auth(admin["token"]),
+            json={"decision": "approve"},
+        )
+        assert approval.status_code == 200
+        assert approval.json()["approval_status"] == "approved"
+
+        approved_login = client.post(f"{API}/auth/login", json={
+            "email": email, "password": PASSWORD,
+        })
+        assert approved_login.status_code == 200
+        assert approved_login.json()["user"]["role"] == "teacher"
+    finally:
+        _delete_user(email)
+
+
+def test_password_is_not_returned_or_stored_plain(student):
+    res = client.get(f"{API}/auth/me", headers=_auth(student["token"]))
+    assert "password" not in res.text.lower()
+    db = SessionLocal()
+    try:
+        user = db.query(Student).filter(Student.email == student["email"]).first()
+        assert user.password_hash != PASSWORD
+    finally:
+        db.close()
+
+
+# ---------- Login and JWT ----------
+
+def test_login_success(student):
+    res = _login(student["email"])
+    assert res.status_code == 200
+    assert res.json()["token_type"] == "bearer"
+
+
+def test_login_wrong_password_returns_401(student):
+    assert _login(student["email"], "WrongPass999").status_code == 401
+
+
+def test_login_unknown_user_returns_401():
+    assert _login(_email("ghost")).status_code == 401
+
+
+def test_me_requires_token():
+    assert client.get(f"{API}/auth/me").status_code == 401
+
+
+def test_me_rejects_garbage_token():
+    assert client.get(f"{API}/auth/me", headers=_auth("not.a.jwt")).status_code == 401
+
+
+def test_me_returns_current_user(student):
+    res = client.get(f"{API}/auth/me", headers=_auth(student["token"]))
+    assert res.status_code == 200
+    assert res.json()["email"] == student["email"]
+    assert res.json()["role"] == "student"
+
+
+def test_profile_update_persists(student):
+    res = client.put(f"{API}/auth/profile", headers=_auth(student["token"]),
+                     json={"department": "ECE", "learning_interests": ["AI", "Python"]})
+    assert res.status_code == 200
+    me = client.get(f"{API}/auth/me", headers=_auth(student["token"])).json()
+    assert me["profile"]["department"] == "ECE"
+
+
+def test_profile_update_requires_token():
+    assert client.put(f"{API}/auth/profile", json={"department": "X"}).status_code == 401
+
+
+# ---------- Role-based access: subjects and topics ----------
+
+def test_create_subject_without_token_returns_401():
+    assert client.post(f"{API}/subjects", json={"name": "NoAuth"}).status_code == 401
+
+
+def test_student_cannot_create_subject(student):
+    res = client.post(f"{API}/subjects", headers=_auth(student["token"]),
+                      json={"name": f"Blocked {uuid.uuid4().hex[:6]}"})
+    assert res.status_code == 403
+
+
+def test_teacher_syllabus_subjects_are_filterable_by_course(teacher):
+    subject_name = f"Scoped Subject {uuid.uuid4().hex[:6]}"
+    payload = {
+        "name": subject_name,
+        "course": "Diploma in Civil Engineering",
+        "curriculum": "Test Technical Board",
+        "academic_year": "Semester 2",
+    }
+    created = client.post(f"{API}/subjects", headers=_auth(teacher["token"]), json=payload)
+    assert created.status_code == 201, created.text
+    subject_id = created.json()["id"]
+    try:
+        filters = {
+            "course": payload["course"],
+            "curriculum": payload["curriculum"],
+            "academic_year": payload["academic_year"],
+        }
+        matched = client.get(f"{API}/subjects", params=filters)
+        assert matched.status_code == 200
+        assert subject_id in [item["id"] for item in matched.json()]
+
+        unmatched = client.get(
+            f"{API}/subjects",
+            params={**filters, "curriculum": "Different Board"},
+        )
+        assert unmatched.status_code == 200
+        assert subject_id not in [item["id"] for item in unmatched.json()]
+    finally:
+        assert client.delete(
+            f"{API}/subjects/{subject_id}", headers=_auth(teacher["token"])
+        ).status_code == 200
+
+
+def test_teacher_subject_and_topic_lifecycle(teacher, student):
+    th = _auth(teacher["token"])
+    name = f"HTTP Subject {uuid.uuid4().hex[:6]}"
+
+    created = client.post(f"{API}/subjects", headers=th, json={"name": name, "code": "HT101"})
+    assert created.status_code == 201
+    sid = created.json()["id"]
+    try:
+        # duplicate subject rejected
+        assert client.post(f"{API}/subjects", headers=th, json={"name": name}).status_code == 400
+
+        # topic creation: teacher ok, student blocked, bad parent -> 404
+        topic = client.post(f"{API}/topics", headers=th,
+                            json={"subject_id": sid, "name": "Variables", "order_index": 1})
+        assert topic.status_code == 201
+        assert client.post(f"{API}/topics", headers=_auth(student["token"]),
+                           json={"subject_id": sid, "name": "Nope"}).status_code == 403
+        assert client.post(f"{API}/topics", headers=th,
+                           json={"subject_id": 999999, "name": "Orphan"}).status_code == 404
+
+        # students can read the subject and its topics
+        sh = _auth(student["token"])
+        assert client.get(f"{API}/subjects/{sid}", headers=sh).status_code == 200
+        topics = client.get(f"{API}/subjects/{sid}/topics", headers=sh)
+        assert topics.status_code == 200
+        assert [t["name"] for t in topics.json()] == ["Variables"]
+
+        # student cannot delete
+        assert client.delete(f"{API}/subjects/{sid}", headers=sh).status_code == 403
+    finally:
+        assert client.delete(f"{API}/subjects/{sid}", headers=th).status_code == 200
+    assert client.get(f"{API}/subjects/{sid}").status_code == 404
+
+
+def test_create_topic_invalid_body_returns_422(teacher):
+    res = client.post(f"{API}/topics", headers=_auth(teacher["token"]), json={"name": "No subject"})
+    assert res.status_code == 422
+
+
+def test_legacy_teacher_signup_is_pending_until_approval():
+    email = _email("legacy_teacher")
+    try:
+        res = client.post("/register", json={
+            "name": "Legacy Sneaky", "email": email,
+            "password": PASSWORD,
+            "role": "teacher",
+            "subject": "Science",
+            "college": "Test Institute",
+            "semester": "Semester 2",
+        })
+        assert res.status_code == 202, res.text
+        assert res.json()["role"] == "teacher"
+        assert res.json()["approval_status"] == "pending"
+        login = client.post("/login", json={"email": email, "password": PASSWORD})
+        assert login.status_code == 403
+    finally:
+        _delete_user(email)
+
+
+# ---------- Quiz question management (teacher) ----------
+
+def test_question_management_lifecycle(teacher, student):
+    th, sh = _auth(teacher["token"]), _auth(student["token"])
+    sid = client.post(f"{API}/subjects", headers=th,
+                      json={"name": f"QM Subject {uuid.uuid4().hex[:6]}"}).json()["id"]
+    try:
+        tid = client.post(f"{API}/topics", headers=th,
+                          json={"subject_id": sid, "name": "QM Topic"}).json()["id"]
+        body = {"topic_id": tid, "question_text": "Which keyword filters rows in SQL?",
+                "options": ["WHERE", "ORDER", "GROUP", "LIMIT"], "correct_answer": 0,
+                "explanation": "WHERE filters rows.", "difficulty": "easy"}
+
+        # students cannot add, list (answers visible) or delete
+        assert client.post(f"{API}/quiz/questions", headers=sh, json=body).status_code == 403
+        assert client.get(f"{API}/quiz/questions", headers=sh).status_code == 403
+
+        # invalid payloads are rejected
+        bad = dict(body, options=["only one"])
+        assert client.post(f"{API}/quiz/questions", headers=th, json=bad).status_code == 422
+
+        created = client.post(f"{API}/quiz/questions", headers=th, json=body)
+        assert created.status_code == 201
+        qid = created.json()["id"]
+
+        listed = client.get(f"{API}/quiz/questions", headers=th, params={"topic_id": tid})
+        assert [q["id"] for q in listed.json()] == [qid]
+
+        # the student quiz must NOT leak the correct answer
+        quiz = client.get(f"{API}/quiz/topic/{tid}", headers=sh)
+        assert quiz.status_code == 200
+        assert "correct_answer" not in quiz.text
+
+        assert client.delete(f"{API}/quiz/questions/{qid}", headers=sh).status_code == 403
+        assert client.delete(f"{API}/quiz/questions/{qid}", headers=th).status_code == 200
+        assert client.delete(f"{API}/quiz/questions/{qid}", headers=th).status_code == 404
+    finally:
+        client.delete(f"{API}/subjects/{sid}", headers=th)
