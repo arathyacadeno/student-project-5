@@ -36,6 +36,14 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* Hide Microsoft Edge & browser native password reveal/clear eye icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 body {
   background-color: var(--bg-main);
   color: var(--text-dark);
@@ -1220,6 +1228,13 @@ body {
 
 .login-text-input.has-right-icon {
   padding-right: 42px;
+}
+
+.login-text-input::-ms-reveal,
+.login-text-input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .login-text-input:focus {
