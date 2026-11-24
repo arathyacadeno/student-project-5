@@ -43,7 +43,9 @@ function TeacherClassesPanel({ onSelectedClassChange, isAdmin = false, hideHeade
   }, [classes, selectedClassId]);
 
   useEffect(() => {
-    onSelectedClassChange(selectedClassId ? Number(selectedClassId) : null);
+    if (typeof onSelectedClassChange === "function") {
+      onSelectedClassChange(selectedClassId ? Number(selectedClassId) : null);
+    }
   }, [onSelectedClassChange, selectedClassId]);
 
   const createClass = async (event) => {

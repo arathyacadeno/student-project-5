@@ -12,7 +12,12 @@ function TeacherCurriculumPage() {
         </div>
       </div>
 
-      <TeacherManagement defaultTab="subjects" />
+      <TeacherManagement
+        defaultTab="subjects"
+        allowedTabs={["subjects", "topics"]}
+        hideHeader={true}
+        hideTabs={false}
+      />
     </div>
   );
 }

@@ -12,7 +12,12 @@ function TeacherQuizzesPage() {
         </div>
       </div>
 
-      <TeacherManagement defaultTab="questions" />
+      <TeacherManagement
+        defaultTab="questions"
+        allowedTabs={["questions"]}
+        hideHeader={true}
+        hideTabs={true}
+      />
     </div>
   );
 }
