@@ -278,7 +278,7 @@ function Home({ user, onLogout }) {
                 comprehension without the overwhelm. Follow linear progressions built by
                 veteran educators.
               </p>
-             
+
             </div>
 
             {/* Card 2 */}
@@ -295,7 +295,7 @@ function Home({ user, onLogout }) {
                 Hands-on contextual quizzes, interactive mini-challenges, and real-time
                 guided feedback to solidify retention as you complete every chapter.
               </p>
-              
+
             </div>
 
             {/* Card 3 */}
@@ -311,7 +311,7 @@ function Home({ user, onLogout }) {
                 Personalized progress curves, milestone celebration badges, and adaptive
                 skill reinforcement schedules that keep scholarly motivation high.
               </p>
-              
+
 
             </div>
           </div>
