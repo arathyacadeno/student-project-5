@@ -161,7 +161,6 @@ function Home({ user, onLogout }) {
                 onClick={(e) => handleNavClick(e, "courses")}
               >
                 <span>Explore Courses</span>
-                <span className="arrow-icon">→</span>
               </button>
               <button
                 type="button"
@@ -169,7 +168,6 @@ function Home({ user, onLogout }) {
                 onClick={handleGetStarted}
               >
                 <span>Get Started</span>
-                <span className="emoji-icon">🚀</span>
               </button>
             </div>
 
@@ -280,9 +278,7 @@ function Home({ user, onLogout }) {
                 comprehension without the overwhelm. Follow linear progressions built by
                 veteran educators.
               </p>
-              <a href="#courses" onClick={(e) => handleNavClick(e, "courses")} className="flint-card-link">
-                Modular Syllabi →
-              </a>
+             
             </div>
 
             {/* Card 2 */}
@@ -299,9 +295,7 @@ function Home({ user, onLogout }) {
                 Hands-on contextual quizzes, interactive mini-challenges, and real-time
                 guided feedback to solidify retention as you complete every chapter.
               </p>
-              <a href="#features" onClick={(e) => handleNavClick(e, "features")} className="flint-card-link">
-                Active Retrieval →
-              </a>
+              
             </div>
 
             {/* Card 3 */}
@@ -317,9 +311,8 @@ function Home({ user, onLogout }) {
                 Personalized progress curves, milestone celebration badges, and adaptive
                 skill reinforcement schedules that keep scholarly motivation high.
               </p>
-              <a href="#how-it-works" onClick={(e) => handleNavClick(e, "how-it-works")} className="flint-card-link">
-                Adaptive Velocity →
-              </a>
+              
+
             </div>
           </div>
         </div>
@@ -580,17 +573,6 @@ function Home({ user, onLogout }) {
               </div>
             </div>
           </div>
-
-          <div className="flint-view-all-row">
-            <button
-              type="button"
-              className="flint-btn-view-all"
-              onClick={handleGetStarted}
-            >
-              <span>View All Courses (18+ Programs)</span>
-              <span>→</span>
-            </button>
-          </div>
         </div>
       </section>
 
@@ -692,137 +674,7 @@ function Home({ user, onLogout }) {
         </div>
       </section>
 
-      {/* =========================================================================
-          6. THE FLINT ADVANTAGE SECTION
-          ========================================================================= */}
-      <section className="flint-section flint-advantage-section">
-        <div className="flint-container">
-          <div className="flint-advantage-grid">
-            {/* Left Column: Interactive Preview Mockup Card */}
-            <div className="flint-advantage-mockup-wrap">
-              <div className="flint-preview-mockup-card">
-                {/* Browser Title Bar */}
-                <div className="flint-mockup-header-bar">
-                  <div className="flint-traffic-dots">
-                    <span className="dot red"></span>
-                    <span className="dot yellow"></span>
-                    <span className="dot green"></span>
-                  </div>
-                  <span className="flint-mockup-url">dashboard.flint.edu</span>
-                  <span className="flint-mockup-tag">Active Preview</span>
-                </div>
 
-                {/* Main Highlight Card */}
-                <div className="flint-mockup-milestone-box">
-                  <div className="flint-milestone-info">
-                    <span className="milestone-badge">WEEKLY MILESTONE</span>
-                    <h4 className="milestone-title">Data Structures: Trees</h4>
-                    <p className="milestone-subtitle">Completed 6 of 8 micro-drills</p>
-                  </div>
-                  <div className="flint-milestone-circle">
-                    <div className="circle-inner">75%</div>
-                  </div>
-                </div>
-
-                {/* Drill Item 1 */}
-                <div className="flint-mockup-task-item">
-                  <div className="task-left">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <polygon points="10 8 16 12 10 16 10 8" />
-                    </svg>
-                    <span>AVL Trees Rotation Dynamics</span>
-                  </div>
-                  <span className="task-status-ready">Ready</span>
-                </div>
-
-                {/* Drill Item 2 */}
-                <div className="flint-mockup-task-item">
-                  <div className="task-left">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="8" x2="21" y1="6" y2="6" />
-                      <line x1="8" x2="21" y1="12" y2="12" />
-                      <line x1="8" x2="21" y1="18" y2="18" />
-                      <line x1="3" x2="3.01" y1="6" y2="6" />
-                      <line x1="3" x2="3.01" y1="12" y2="12" />
-                      <line x1="3" x2="3.01" y1="18" y2="18" />
-                    </svg>
-                    <span>Concept Quiz: Balancing Heuristics</span>
-                  </div>
-                  <span className="task-status-locked">Locked</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Key Benefits Checklist */}
-            <div className="flint-advantage-text-wrap">
-              <div className="flint-pill-badge">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-                <span>THE FLINT ADVANTAGE</span>
-              </div>
-
-              <h2 className="flint-section-heading">
-                Everything You Need for a Better Learning Experience
-              </h2>
-
-              <p className="flint-section-subhead-left">
-                Say goodbye to scattered notes and clunky platforms. FLINT provides
-                clean educational flow from day one, empowering learners to focus purely
-                on conceptual depth.
-              </p>
-
-              <div className="flint-benefits-checklist">
-                <div className="flint-benefit-item">
-                  <div className="flint-benefit-check">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                  <span>Intuitive, friction-free interface designed for deep scholarly focus</span>
-                </div>
-
-                <div className="flint-benefit-item">
-                  <div className="flint-benefit-check">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                  <span>Curated, logically organized study modules & authoritative references</span>
-                </div>
-
-                <div className="flint-benefit-item">
-                  <div className="flint-benefit-check">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                  <span>Active, practice-first learning model with immediate actionable answers</span>
-                </div>
-
-                <div className="flint-benefit-item">
-                  <div className="flint-benefit-check">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                  <span>Quantifiable milestones and transparent retention analytics</span>
-                </div>
-
-                <div className="flint-benefit-item">
-                  <div className="flint-benefit-check">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                  <span>Accessible resources anytime across mobile, tablet, and desktop</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* =========================================================================
           8. CALL TO ACTION BANNER
@@ -855,15 +707,7 @@ function Home({ user, onLogout }) {
                 onClick={handleGetStarted}
               >
                 <span>Get Started Today</span>
-                <span>→</span>
               </button>
-              <div className="flint-cta-footnote">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <span>No credit card required • Instant access</span>
-              </div>
             </div>
           </div>
         </div>

@@ -71,7 +71,6 @@ function Register({ onSwitchToLogin }) {
             src="/flint-logo.jpeg"
             alt="FLINT logo"
           />
-          <h1 className="login-brand-title">FLINT</h1>
           <p className="login-brand-subtitle">
             {role === "teacher" ? "Request a teacher account" : "Create your student account"}
           </p>
@@ -261,29 +260,6 @@ function Register({ onSwitchToLogin }) {
                       required
                     />
                   </div>
-                </div>
-              </div>
-
-              <div className="login-field-group">
-                <label className="login-field-label" htmlFor="class-code">Teacher's class code (optional)</label>
-                <div className="login-input-wrapper">
-                  <span className="login-input-icon left">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 9h16" />
-                      <path d="M4 15h16" />
-                      <path d="M10 3L8 21" />
-                    </svg>
-                  </span>
-                  <input
-                    id="class-code"
-                    type="text"
-                    className="login-text-input"
-                    maxLength={16}
-                    autoCapitalize="characters"
-                    placeholder="Enter code shared by teacher"
-                    value={classCode}
-                    onChange={(e) => setClassCode(e.target.value.toUpperCase())}
-                  />
                 </div>
               </div>
             </>
