@@ -30,7 +30,13 @@ const EMPTY_QUESTION = {
   difficulty: "medium",
 };
 
-function TeacherManagement({ defaultTab = "subjects", embedded = false }) {
+function TeacherManagement({
+  defaultTab = "subjects",
+  embedded = false,
+  hideHeader = false,
+  hideTabs = false,
+  allowedTabs = ["subjects", "topics", "questions"],
+}) {
   const [tab, setTab] = useState(defaultTab);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -285,7 +291,7 @@ function TeacherManagement({ defaultTab = "subjects", embedded = false }) {
 
   return (
     <div className={embedded ? "teacher-embedded-mgmt" : "teacher-dashboard-page"}>
-      {!embedded && (
+      {!embedded && !hideHeader && (
         <div className="page-header-row">
           <div>
             <h2>🛠️ Content Management</h2>
@@ -303,17 +309,25 @@ function TeacherManagement({ defaultTab = "subjects", embedded = false }) {
         </div>
       )}
 
-      <div style={{ display: "flex", gap: "8px", margin: "16px 0" }}>
-        {[
-          ["subjects", "Subjects"],
-          ["topics", "Topics"],
-          ["questions", "Quiz Questions"],
-        ].map(([key, label]) => (
-          <button key={key} className={`tab-btn ${tab === key ? "active" : ""}`} onClick={() => setTab(key)}>
-            {label}
-          </button>
-        ))}
-      </div>
+      {!hideTabs && allowedTabs.length > 1 && (
+        <div style={{ display: "flex", gap: "8px", margin: "16px 0" }}>
+          {[
+            ["subjects", "Subjects"],
+            ["topics", "Topics (Syllabus)"],
+            ["questions", "Quiz Questions"],
+          ]
+            .filter(([key]) => allowedTabs.includes(key))
+            .map(([key, label]) => (
+              <button
+                key={key}
+                className={`tab-btn ${tab === key ? "active" : ""}`}
+                onClick={() => setTab(key)}
+              >
+                {label}
+              </button>
+            ))}
+        </div>
+      )}
 
       {/* ---------------- SUBJECTS ---------------- */}
       {tab === "subjects" && (

@@ -12,7 +12,7 @@ function TeacherClassesPage({ user }) {
         </div>
       </div>
 
-      <TeacherClassesPanel isAdmin={user?.role === "admin"} />
+      <TeacherClassesPanel isAdmin={user?.role === "admin"} hideHeader={true} />
     </div>
   );
 }
