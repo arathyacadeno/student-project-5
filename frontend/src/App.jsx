@@ -19,6 +19,12 @@ import CourseSummaries from "./pages/CourseSummaries";
 import PreviousPapers from "./pages/PreviousPapers";
 import StudentProfile from "./pages/StudentProfile";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import TeacherClassesPage from "./pages/TeacherClassesPage";
+import TeacherCurriculumPage from "./pages/TeacherCurriculumPage";
+import TeacherQuizzesPage from "./pages/TeacherQuizzesPage";
+import TeacherGroupsPage from "./pages/TeacherGroupsPage";
+import TeacherCounsellingPage from "./pages/TeacherCounsellingPage";
+import TeacherRevisionNotesPage from "./pages/TeacherRevisionNotesPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminManagementPage from "./pages/AdminManagementPage";
 
@@ -141,12 +147,14 @@ function App() {
         <Route
           path="/groups"
           element={
-            user ? (
+            !user ? (
+              <Navigate to="/login" replace />
+            ) : user.role === "teacher" ? (
+              <Navigate to="/teacher/groups" replace />
+            ) : (
               <Layout user={user} onLogout={handleLogout}>
                 <StudyGroups user={user} />
               </Layout>
-            ) : (
-              <Navigate to="/login" replace />
             )
           }
         />
@@ -338,14 +346,90 @@ function App() {
         />
 
         <Route
+          path="/teacher/classes"
+          element={
+            user && user.role === "teacher" ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <TeacherClassesPage user={user} />
+              </Layout>
+            ) : (
+              <Navigate to={getDefaultRouteForUser(user)} replace />
+            )
+          }
+        />
+
+        <Route
+          path="/teacher/curriculum"
+          element={
+            user && user.role === "teacher" ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <TeacherCurriculumPage />
+              </Layout>
+            ) : (
+              <Navigate to={getDefaultRouteForUser(user)} replace />
+            )
+          }
+        />
+
+        <Route
+          path="/teacher/quizzes"
+          element={
+            user && user.role === "teacher" ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <TeacherQuizzesPage />
+              </Layout>
+            ) : (
+              <Navigate to={getDefaultRouteForUser(user)} replace />
+            )
+          }
+        />
+
+        <Route
+          path="/teacher/groups"
+          element={
+            user && user.role === "teacher" ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <TeacherGroupsPage />
+              </Layout>
+            ) : (
+              <Navigate to={getDefaultRouteForUser(user)} replace />
+            )
+          }
+        />
+
+        <Route
+          path="/teacher/counselling"
+          element={
+            user && user.role === "teacher" ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <TeacherCounsellingPage />
+              </Layout>
+            ) : (
+              <Navigate to={getDefaultRouteForUser(user)} replace />
+            )
+          }
+        />
+
+        <Route
+          path="/teacher/revision-notes"
+          element={
+            user && user.role === "teacher" ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <TeacherRevisionNotesPage />
+              </Layout>
+            ) : (
+              <Navigate to={getDefaultRouteForUser(user)} replace />
+            )
+          }
+        />
+
+        <Route
           path="/teacher/manage"
           element={
             user?.role === "admin" ? (
               <Navigate to="/admin/manage/content" replace />
             ) : user?.role === "teacher" ? (
-              <Layout user={user} onLogout={handleLogout}>
-                <TeacherManagement />
-              </Layout>
+              <Navigate to="/teacher/curriculum" replace />
             ) : (
               <Navigate to={user ? "/dashboard" : "/login"} replace />
             )
