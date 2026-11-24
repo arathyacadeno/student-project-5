@@ -19,7 +19,7 @@ function Sidebar({ user, mobileOpen, onClose }) {
   ];
 
   const teacherNavItems = [
-    { to: "/teacher", label: "Teacher Dashboard", icon: "👨‍🏫" },
+    { to: "/teacher", label: "Dashboard", icon: "📊" },
     { to: "/teacher/manage", label: "Manage Content", icon: "🛠️" },
     { to: "/materials", label: "Study Materials", icon: "📚" },
     { to: "/groups", label: "Study Groups", icon: "👥" },
@@ -29,7 +29,7 @@ function Sidebar({ user, mobileOpen, onClose }) {
   ];
 
   const adminNavItems = [
-    { to: "/admin", label: "Admin Dashboard", icon: "🛡️" },
+    { to: "/admin", label: "Dashboard", icon: "📊" },
     { to: "/admin/manage/teacher-requests", label: "Teacher Requests", icon: "👨‍🏫" },
     { to: "/admin/manage/accounts", label: "Accounts", icon: "👥" },
     { to: "/admin/manage/classes", label: "Classes", icon: "🏫" },

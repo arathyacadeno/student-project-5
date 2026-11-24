@@ -1,16 +1,27 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
 import TeacherClassesPanel from "./TeacherClassesPanel";
+import TeacherManagement from "./TeacherManagement";
 
 function TeacherDashboard({ user, isAdmin = false }) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "overview";
+
+  const handleTabChange = (tabId) => {
+    setSearchParams({ tab: tabId });
+  };
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Question Papers State
+  const [papers, setPapers] = useState([]);
+  const [papersLoading, setPapersLoading] = useState(false);
 
   // Counselling Requests State
   const [counsellingRequests, setCounsellingRequests] = useState([]);
@@ -165,12 +176,25 @@ function TeacherDashboard({ user, isAdmin = false }) {
     }
   };
 
+  const fetchPapers = async () => {
+    setPapersLoading(true);
+    try {
+      const res = await api.get("/api/v1/papers", { params: { skip: 0, limit: 50 } });
+      setPapers(res.data.items || []);
+    } catch (err) {
+      console.error("Failed to load question papers:", err);
+    } finally {
+      setPapersLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchCounsellingRequests();
     fetchGuidanceDocs();
     fetchRevisionQueue();
     fetchGuidanceActivity();
     fetchStudyGroups();
+    fetchPapers();
   }, []);
 
   useEffect(() => {
