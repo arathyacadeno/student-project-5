@@ -16,6 +16,15 @@ import {
 
 function StudentDashboard({ user }) {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.role === "teacher") {
+      navigate("/teacher", { replace: true });
+    } else if (user?.role === "admin") {
+      navigate("/admin", { replace: true });
+    }
+  }, [user, navigate]);
+
   const [summary, setSummary] = useState(null);
   const [profile, setProfile] = useState(null);
   const [materials, setMaterials] = useState([]);
@@ -31,6 +40,7 @@ function StudentDashboard({ user }) {
   const [loadingRevision, setLoadingRevision] = useState(false);
 
   const fetchData = async () => {
+    if (user?.role && user.role !== "student") return;
     setLoading(true);
     setError(null);
     try {

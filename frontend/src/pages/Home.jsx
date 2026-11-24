@@ -26,7 +26,9 @@ function Home({ user, onLogout }) {
 
   const handleSignIn = () => {
     if (user) {
-      navigate("/dashboard");
+      if (user.role === "admin") navigate("/admin");
+      else if (user.role === "teacher") navigate("/teacher");
+      else navigate("/dashboard");
     } else {
       navigate("/login");
     }
@@ -34,7 +36,9 @@ function Home({ user, onLogout }) {
 
   const handleGetStarted = () => {
     if (user) {
-      navigate("/dashboard");
+      if (user.role === "admin") navigate("/admin");
+      else if (user.role === "teacher") navigate("/teacher");
+      else navigate("/dashboard");
     } else {
       navigate("/register");
     }
