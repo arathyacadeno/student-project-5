@@ -167,12 +167,14 @@ function App() {
         <Route
           path="/videos"
           element={
-            user ? (
+            !user ? (
+              <Navigate to="/login" replace />
+            ) : user.role === "student" ? (
               <Layout user={user} onLogout={handleLogout}>
                 <CourseVideos />
               </Layout>
             ) : (
-              <Navigate to="/login" replace />
+              <Navigate to={getDefaultRouteForUser(user)} replace />
             )
           }
         />

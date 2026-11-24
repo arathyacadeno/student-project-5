@@ -25,7 +25,6 @@ function Sidebar({ user, mobileOpen, onClose }) {
     { to: "/groups", label: "Study Groups", icon: "👥" },
     { to: "/summaries", label: "Course Summaries", icon: "📖" },
     { to: "/papers", label: "Previous Papers", icon: "📄" },
-    { to: "/videos", label: "Course Videos", icon: "▶️" },
     { to: "/mentor", label: "AI Mentor", icon: "🤖" },
   ];
 
