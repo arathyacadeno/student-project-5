@@ -34,10 +34,64 @@ function StudentDashboard({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Study Material Reader Modal & Filter State
+  const [activeMaterial, setActiveMaterial] = useState(null);
+  const [filterWeakOnly, setFilterWeakOnly] = useState(false);
+  const [filterBookmarkedOnly, setFilterBookmarkedOnly] = useState(false);
+  const [materialSearch, setMaterialSearch] = useState("");
+  const [fetchingTopicMaterial, setFetchingTopicMaterial] = useState(false);
+
   // AI Revision Notes Modal State (Module 10)
   const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [revisionNotes, setRevisionNotes] = useState(null);
   const [loadingRevision, setLoadingRevision] = useState(false);
+
+  const handleToggleBookmark = async (id, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await api.post(`/materials/${id}/bookmark`);
+      const isBookmarked = res.data.bookmarked;
+      setMaterials((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, is_bookmarked: isBookmarked } : m))
+      );
+      if (activeMaterial && activeMaterial.id === id) {
+        setActiveMaterial((prev) => ({ ...prev, is_bookmarked: isBookmarked }));
+      }
+    } catch (err) {
+      console.error("Bookmark toggle failed:", err);
+    }
+  };
+
+  const handleOpenMaterialForTopic = async (topicName, subjectName) => {
+    // 1. Check if we already have it in local loaded materials
+    const matched = materials.find(
+      (m) =>
+        (m.topic && m.topic.toLowerCase() === topicName.toLowerCase()) ||
+        (m.title && m.title.toLowerCase().includes(topicName.toLowerCase()))
+    );
+    if (matched) {
+      setActiveMaterial(matched);
+      return;
+    }
+
+    // 2. Query backend for topic material
+    setFetchingTopicMaterial(true);
+    try {
+      const res = await api.get("/materials", {
+        params: { search: topicName, limit: 1 },
+      });
+      if (res.data?.items?.length > 0) {
+        setActiveMaterial(res.data.items[0]);
+      } else {
+        handleGenerateRevisionNotes(topicName, subjectName || "General Curriculum");
+      }
+    } catch (err) {
+      console.error("Error fetching topic material:", err);
+      handleGenerateRevisionNotes(topicName, subjectName || "General Curriculum");
+    } finally {
+      setFetchingTopicMaterial(false);
+    }
+  };
 
   const fetchData = async () => {
     if (user?.role && user.role !== "student") return;
@@ -113,13 +167,27 @@ function StudentDashboard({ user }) {
     .filter(Boolean)
     .join(" · ");
 
+  const weakTopicNames = new Set((summary?.weak_topics || []).map((t) => t.toLowerCase()));
+
   const enrolledSubjects = [
     "All",
     ...Array.from(new Set(materials.map((m) => m.subject).filter(Boolean))),
   ];
-  const filteredMaterials = materials.filter(
-    (m) => activeSubject === "All" || m.subject === activeSubject
-  );
+  const filteredMaterials = materials.filter((m) => {
+    if (activeSubject !== "All" && m.subject !== activeSubject) return false;
+    if (filterWeakOnly && !m.is_weak_topic && !weakTopicNames.has((m.topic || "").toLowerCase())) return false;
+    if (filterBookmarkedOnly && !m.is_bookmarked) return false;
+    if (materialSearch.trim()) {
+      const term = materialSearch.toLowerCase();
+      const match =
+        (m.title || "").toLowerCase().includes(term) ||
+        (m.topic || "").toLowerCase().includes(term) ||
+        (m.subject || "").toLowerCase().includes(term) ||
+        (m.summary || "").toLowerCase().includes(term);
+      if (!match) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="dashboard-page">
@@ -162,7 +230,11 @@ function StudentDashboard({ user }) {
           </button>
           <button
             className="action-btn-secondary"
-            onClick={() => navigate("/materials")}
+            onClick={() => {
+              const el = document.getElementById("study-materials-section");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+              else navigate("/materials");
+            }}
           >
             📚 Study Materials for My Course
           </button>
@@ -236,7 +308,9 @@ function StudentDashboard({ user }) {
                   </button>
                   <button
                     className="pill-action-notes"
-                    onClick={() => navigate(`/materials?search=${encodeURIComponent(topic)}`)}
+                    onClick={() => handleOpenMaterialForTopic(topic)}
+                    disabled={fetchingTopicMaterial}
+                    title="Read official study notes for this weak topic directly on your dashboard"
                   >
                     📖 Read Notes
                   </button>
@@ -377,11 +451,18 @@ function StudentDashboard({ user }) {
         <section className="dashboard-quick-actions-card">
           <h3>🎯 Recommended Next Actions</h3>
           <div className="quick-actions-list">
-            <div className="quick-action-item" onClick={() => navigate("/materials")}>
+            <div
+              className="quick-action-item"
+              onClick={() => {
+                const el = document.getElementById("study-materials-section");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+                else navigate("/materials");
+              }}
+            >
               <span className="qa-icon">📚</span>
               <div className="qa-text">
                 <strong>Materials for My Enrolled Course</strong>
-                <span>Only resources matching your registered course, institution, and year/semester are shown; weak-topic notes are prioritized.</span>
+                <span>Directly read, search, and bookmark syllabus notes tailored to your course and weak topics.</span>
               </div>
               <span className="qa-arrow">→</span>
             </div>
@@ -417,7 +498,7 @@ function StudentDashboard({ user }) {
       </div>
 
       {/* Enrolled Course Study Materials Section */}
-      <section className="dashboard-materials-preview">
+      <section className="dashboard-materials-preview" id="study-materials-section">
         <div className="section-head-row">
           <div>
             <h3>📚 Study Materials: {profile?.course || "Your Enrolled Course"}</h3>
@@ -437,116 +518,180 @@ function StudentDashboard({ user }) {
           </button>
         </div>
 
-        {/* Enrolled Course Quick Actions Toolbar */}
+        {/* Enrolled Course Quick Actions & Filter Toolbar */}
         <div
           className="course-study-toolbar"
           style={{
             background: "#f8fafc",
             border: "1px solid #e2e8f0",
             borderRadius: "10px",
-            padding: "12px 16px",
+            padding: "14px 16px",
             margin: "12px 0 16px",
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "10px",
+            flexDirection: "column",
+            gap: "12px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <span style={{ fontSize: "12.5px", fontWeight: "700", color: "#0f172a" }}>
-              🎯 Course Study Tools:
-            </span>
-            <button
-              style={{
-                padding: "5px 12px",
-                fontSize: "12px",
-                borderRadius: "16px",
-                border: "1px solid #cbd5e1",
-                background: "white",
-                cursor: "pointer",
-                color: "#1e293b",
-                fontWeight: "600",
-              }}
-              onClick={() => navigate("/materials")}
-            >
-              📖 All Course Notes
-            </button>
-            <button
-              style={{
-                padding: "5px 12px",
-                fontSize: "12px",
-                borderRadius: "16px",
-                border: "1px solid #cbd5e1",
-                background: "white",
-                cursor: "pointer",
-                color: "#1e293b",
-                fontWeight: "600",
-              }}
-              onClick={() => navigate("/summaries")}
-            >
-              📑 Rapid Revision Summaries
-            </button>
-            <button
-              style={{
-                padding: "5px 12px",
-                fontSize: "12px",
-                borderRadius: "16px",
-                border: "1px solid #cbd5e1",
-                background: "white",
-                cursor: "pointer",
-                color: "#1e293b",
-                fontWeight: "600",
-              }}
-              onClick={() => navigate("/papers")}
-            >
-              📄 Solved Question Papers
-            </button>
-            <button
-              style={{
-                padding: "5px 12px",
-                fontSize: "12px",
-                borderRadius: "16px",
-                border: "1px solid #cbd5e1",
-                background: "white",
-                cursor: "pointer",
-                color: "#1e293b",
-                fontWeight: "600",
-              }}
-              onClick={() => navigate("/mock-tests")}
-            >
-              📝 Adaptive Mock Test
-            </button>
+          {/* Top Row: Navigation Shortcuts & Instant Search */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "12.5px", fontWeight: "700", color: "#0f172a" }}>
+                🎯 Course Study Tools:
+              </span>
+              <button
+                style={{
+                  padding: "5px 12px",
+                  fontSize: "12px",
+                  borderRadius: "16px",
+                  border: "1px solid #cbd5e1",
+                  background: "white",
+                  cursor: "pointer",
+                  color: "#1e293b",
+                  fontWeight: "600",
+                }}
+                onClick={() => navigate("/materials")}
+              >
+                📖 All Course Notes
+              </button>
+              <button
+                style={{
+                  padding: "5px 12px",
+                  fontSize: "12px",
+                  borderRadius: "16px",
+                  border: "1px solid #cbd5e1",
+                  background: "white",
+                  cursor: "pointer",
+                  color: "#1e293b",
+                  fontWeight: "600",
+                }}
+                onClick={() => navigate("/summaries")}
+              >
+                📑 Rapid Revision Summaries
+              </button>
+              <button
+                style={{
+                  padding: "5px 12px",
+                  fontSize: "12px",
+                  borderRadius: "16px",
+                  border: "1px solid #cbd5e1",
+                  background: "white",
+                  cursor: "pointer",
+                  color: "#1e293b",
+                  fontWeight: "600",
+                }}
+                onClick={() => navigate("/papers")}
+              >
+                📄 Solved Question Papers
+              </button>
+              <button
+                style={{
+                  padding: "5px 12px",
+                  fontSize: "12px",
+                  borderRadius: "16px",
+                  border: "1px solid #cbd5e1",
+                  background: "white",
+                  cursor: "pointer",
+                  color: "#1e293b",
+                  fontWeight: "600",
+                }}
+                onClick={() => navigate("/mock-tests")}
+              >
+                📝 Adaptive Mock Test
+              </button>
+            </div>
+
+            {/* Instant Filter Search Input */}
+            <div style={{ display: "flex", alignItems: "center", minWidth: "220px" }}>
+              <input
+                type="text"
+                placeholder="Search notes or topic..."
+                value={materialSearch}
+                onChange={(e) => setMaterialSearch(e.target.value)}
+                className="search-input"
+                style={{
+                  fontSize: "12px",
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                  width: "100%",
+                }}
+              />
+            </div>
           </div>
 
-          {enrolledSubjects.length > 2 && (
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
-                Filter Subject:
-              </span>
-              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                {enrolledSubjects.map((s) => (
-                  <button
-                    key={s}
-                    style={{
-                      padding: "3px 9px",
-                      fontSize: "11px",
-                      borderRadius: "12px",
-                      border: "1px solid",
-                      borderColor: activeSubject === s ? "var(--primary)" : "#cbd5e1",
-                      background: activeSubject === s ? "var(--primary)" : "white",
-                      color: activeSubject === s ? "white" : "#334155",
-                      cursor: "pointer",
-                      fontWeight: activeSubject === s ? "700" : "500",
-                    }}
-                    onClick={() => setActiveSubject(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
+          {/* Bottom Row: Filter Toggles & Subjects */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", paddingTop: "8px", borderTop: "1px dashed #e2e8f0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <button
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "11.5px",
+                  borderRadius: "14px",
+                  border: "1px solid",
+                  borderColor: filterWeakOnly ? "#ef4444" : "#cbd5e1",
+                  background: filterWeakOnly ? "#fee2e2" : "white",
+                  color: filterWeakOnly ? "#991b1b" : "#475569",
+                  cursor: "pointer",
+                  fontWeight: "700",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+                onClick={() => setFilterWeakOnly(!filterWeakOnly)}
+              >
+                ⚠️ Weak Topics Only
+              </button>
+
+              <button
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "11.5px",
+                  borderRadius: "14px",
+                  border: "1px solid",
+                  borderColor: filterBookmarkedOnly ? "#f59e0b" : "#cbd5e1",
+                  background: filterBookmarkedOnly ? "#fef3c7" : "white",
+                  color: filterBookmarkedOnly ? "#b45309" : "#475569",
+                  cursor: "pointer",
+                  fontWeight: "700",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+                onClick={() => setFilterBookmarkedOnly(!filterBookmarkedOnly)}
+              >
+                ★ Saved Bookmarks
+              </button>
             </div>
-          )}
+
+            {enrolledSubjects.length > 2 && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                  Subject:
+                </span>
+                <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                  {enrolledSubjects.map((s) => (
+                    <button
+                      key={s}
+                      style={{
+                        padding: "3px 9px",
+                        fontSize: "11px",
+                        borderRadius: "12px",
+                        border: "1px solid",
+                        borderColor: activeSubject === s ? "var(--primary)" : "#cbd5e1",
+                        background: activeSubject === s ? "var(--primary)" : "white",
+                        color: activeSubject === s ? "white" : "#334155",
+                        cursor: "pointer",
+                        fontWeight: activeSubject === s ? "700" : "500",
+                      }}
+                      onClick={() => setActiveSubject(s)}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {filteredMaterials.length ? (
@@ -555,36 +700,60 @@ function StudentDashboard({ user }) {
               <div
                 key={mat.id}
                 className="preview-mat-card"
-                style={
-                  mat.is_weak_topic
+                onClick={() => setActiveMaterial(mat)}
+                style={{
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  ...(mat.is_weak_topic || weakTopicNames.has((mat.topic || "").toLowerCase())
                     ? {
                         borderColor: "#fca5a5",
                         boxShadow: "0 2px 8px rgba(239, 68, 68, 0.12)",
                       }
-                    : {}
-                }
+                    : {}),
+                }}
               >
                 <div className="card-top-badges">
-                  <span className="subject-badge">{mat.subject}</span>
-                  <span
+                  <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap" }}>
+                    <span className="subject-badge">{mat.subject}</span>
+                    <span
+                      style={{
+                        fontSize: "10.5px",
+                        background: "#f1f5f9",
+                        padding: "2px 7px",
+                        borderRadius: "4px",
+                        color: "#475569",
+                        textTransform: "capitalize",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {mat.material_type?.replace("_", " ")}
+                    </span>
+                    {(mat.is_weak_topic || weakTopicNames.has((mat.topic || "").toLowerCase())) && (
+                      <span className="weak-priority-badge">⚠️ Weak Topic Focus</span>
+                    )}
+                  </div>
+
+                  <button
+                    className={`bookmark-icon-btn ${mat.is_bookmarked ? "bookmarked" : ""}`}
                     style={{
-                      fontSize: "10.5px",
-                      background: "#f1f5f9",
-                      padding: "2px 7px",
-                      borderRadius: "4px",
-                      color: "#475569",
-                      textTransform: "capitalize",
-                      fontWeight: "600",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "18px",
+                      color: mat.is_bookmarked ? "#f59e0b" : "#94a3b8",
+                      padding: "0 4px",
+                      lineHeight: 1,
                     }}
+                    onClick={(e) => handleToggleBookmark(mat.id, e)}
+                    title={mat.is_bookmarked ? "Remove bookmark" : "Save bookmark"}
                   >
-                    {mat.material_type?.replace("_", " ")}
-                  </span>
-                  {mat.is_weak_topic && (
-                    <span className="weak-priority-badge">⚠️ Weak Topic Focus</span>
-                  )}
+                    {mat.is_bookmarked ? "★" : "☆"}
+                  </button>
                 </div>
-                <h4>{mat.title}</h4>
-                <p className="mat-summary-preview">{mat.summary}</p>
+
+                <h4 style={{ margin: "10px 0 6px" }}>{mat.title}</h4>
+                <p className="mat-summary-preview">{mat.summary || mat.content?.substring(0, 140) + "..."}</p>
+
                 <div
                   className="card-footer-action"
                   style={{
@@ -601,7 +770,10 @@ function StudentDashboard({ user }) {
                     <button
                       className="read-btn-sm"
                       style={{ fontSize: "11px", padding: "4px 8px" }}
-                      onClick={() => handleGenerateRevisionNotes(mat.topic, mat.subject)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleGenerateRevisionNotes(mat.topic, mat.subject);
+                      }}
                       title="Generate instant AI Revision Notes for this topic"
                     >
                       🚀 AI Notes
@@ -609,11 +781,12 @@ function StudentDashboard({ user }) {
                     <button
                       className="read-btn-sm"
                       style={{ fontSize: "11px", padding: "4px 8px" }}
-                      onClick={() =>
-                        navigate(`/materials?search=${encodeURIComponent(mat.title)}`)
-                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMaterial(mat);
+                      }}
                     >
-                      Read →
+                      Read Notes →
                     </button>
                   </div>
                 </div>
@@ -752,6 +925,99 @@ function StudentDashboard({ user }) {
                 onClick={() => setShowRevisionModal(false)}
               >
                 Close & Review Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reader Modal: Official Course Study Material */}
+      {activeMaterial && (
+        <div className="modal-backdrop" onClick={() => setActiveMaterial(null)}>
+          <div className="reader-modal modal-dialog modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-topbar">
+              <div className="topbar-info" style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <span className="subject-pill">{activeMaterial.subject}</span>
+                <span className="topic-indicator">📌 {activeMaterial.topic}</span>
+                {(activeMaterial.is_weak_topic || weakTopicNames.has((activeMaterial.topic || "").toLowerCase())) && (
+                  <span className="weak-priority-badge" style={{ margin: 0 }}>⚠️ Weak Topic Focus</span>
+                )}
+              </div>
+              <div className="modal-top-actions" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <button
+                  className={`modal-bookmark-btn ${activeMaterial.is_bookmarked ? "bookmarked" : ""}`}
+                  style={{
+                    background: activeMaterial.is_bookmarked ? "#fef3c7" : "#f1f5f9",
+                    color: activeMaterial.is_bookmarked ? "#b45309" : "#475569",
+                    border: "1px solid #cbd5e1",
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}
+                  onClick={(e) => handleToggleBookmark(activeMaterial.id, e)}
+                >
+                  {activeMaterial.is_bookmarked ? "★ Saved" : "☆ Save"}
+                </button>
+                <button
+                  className="modal-close-btn"
+                  onClick={() => setActiveMaterial(null)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="reader-body modal-body-scrollable">
+              <h2 className="reader-title" style={{ margin: "0 0 12px", fontSize: "20px", color: "#0f172a" }}>
+                {activeMaterial.title}
+              </h2>
+              {activeMaterial.summary && (
+                <div
+                  className="reader-summary-box"
+                  style={{
+                    background: "#f0fdfa",
+                    border: "1px solid #99f6e4",
+                    borderRadius: "8px",
+                    padding: "12px 16px",
+                    marginBottom: "16px",
+                    color: "#0f766e",
+                    fontSize: "13.5px",
+                  }}
+                >
+                  <strong>💡 Key Takeaway:</strong> {activeMaterial.summary}
+                </div>
+              )}
+              <div className="reader-markdown" style={{ color: "#1e293b", fontSize: "14px", lineHeight: "1.7" }}>
+                <pre className="content-pre" style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+                  {activeMaterial.content}
+                </pre>
+              </div>
+            </div>
+
+            <div className="reader-footer modal-footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  className="action-btn-secondary btn-sm"
+                  onClick={() => {
+                    handleGenerateRevisionNotes(activeMaterial.topic, activeMaterial.subject);
+                  }}
+                >
+                  🚀 Generate AI Notes
+                </button>
+                <button
+                  className="action-btn-secondary btn-sm"
+                  onClick={() => navigate("/quiz")}
+                >
+                  🎯 Quiz on Topic
+                </button>
+              </div>
+              <button
+                className="action-btn-primary btn-sm"
+                onClick={() => setActiveMaterial(null)}
+              >
+                Done Reading
               </button>
             </div>
           </div>
